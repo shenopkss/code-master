@@ -1,0 +1,23 @@
+CREATE TABLE ods_{{data.name | underscore }}_text(
+{% set index = data.columns | length %}
+{% for col in data.columns %}
+{% set index = index - 1 %}
+{{ col.name | underscore }} {{ col.type | hive }}{% if index > 0 %},{% endif %}
+
+{% endfor %}
+)
+ROW FORMAT SERDE
+  'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe'
+WITH SERDEPROPERTIES (
+  'field.delim'=',',
+  'serialization.format'=',');
+
+CREATE TABLE ods_{{data.name | underscore }}(
+{% for col in data.columns %}
+{{ col.name | underscore }} {{col.type | hive}}{% if index > 0 %},{% endif %}
+
+{% endfor %}
+  )
+PARTITIONED BY (year string, month string, day string)
+row format delimited fields terminated by '\,'
+stored as orc;

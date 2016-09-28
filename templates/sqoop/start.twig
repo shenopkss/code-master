@@ -1,0 +1,4 @@
+{% for table in db.tables %}
+{{ render('create_table.twig', table, "#{table.name}/create_table_#{table.name}.sql")}}
+{{ render('import.twig', table, "#{table.name}/import_#{table.name}.sh")}}
+{% endfor %}

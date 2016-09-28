@@ -1,0 +1,65 @@
+#!/bin/bash
+#按天导入数据到hive
+#输入参数:数据源表名,开始时间,需要导入的天数
+PATH=/app/hadoop/bin/:/app/hive/bin/:/app/sqoop-1.4.6.bin__hadoop-2.0.4-alpha/bin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+if [ $# -lt 2 ]; then
+	echo ""
+	echo "USERAGE: [2016-07-01 31]"
+	echo ""
+fi
+
+table='{{data.name}}'
+target_table='ods_{{data.name | underscore }}'
+sdate=$1
+range=$2
+
+echo "start import data with arguments : $table,$target_table,$sdate,$range"
+for i in `seq 0 $range`
+do
+	cdate=`date -d "$sdate + $i days" "+%Y-%m-%d"`
+	year=`date -d "$cdate" "+%Y"`
+	month=`date -d "$cdate" "+%Y-%m"`
+
+	echo " -- start import data of $cdate -- "
+	#检查路径是否存在,存在则删掉
+	target_path=/sqoop/$target_table
+	hdfs dfs -test -e $target_path
+	if [ $? -eq 0 ] && [ $target_path != "/" ];then
+		echo "** target data dir $target_path exist ! delete it before import data into ."
+		hdfs dfs -rm -r $target_path
+		echo "** delete $target_path success !"
+	fi
+	#通用sqoop导入数据到目标hdfs路径
+	sqoop import --connect "jdbc:mysql://ip:port/Report" \
+    --username username --password password\
+	--query "select {% for column in data.columns %}{{column.name}}{% if column.name != data.columns[data.columns|length - 1].name %}, {%endif%}{% endfor %} FROM $table WHERE date_format(day,'%Y-%m-%d')='$cdate' and  \$CONDITIONS" \
+	--split-by RoomId\
+	--target-dir $target_path
+	#导入数据到临时表,并转orc表
+	tmp_table=$target_table"_text"
+	hive -e "use ods;
+		load data inpath '$target_path' overwrite into table $tmp_table;
+		alter table $target_table drop if exists partition (year='$year',month='$month',day='$cdate');
+		insert overwrite table $target_table partition(year='$year',month='$month',day='$cdate') select {% for column in data.columns %}{{column.name | underscore }}{% if column.name != data.columns[data.columns|length - 1].name %}, {%endif%}{% endfor %} from $tmp_table;"
+
+
+	#use ods;
+	#--加载数据到临时表
+	#load data inpath '$target_path' into table $tmp_table;
+	#--从临时表查询数据并插入到目标表
+	#insert overwrite table $target_table partition(year='$year',month='$month',day='$cdate') select * from $tmp_table;
+
+	if [ $? -eq 0 ]; then
+		echo "$target_table  success  "$cdate >> ~/workspace/runlog.log
+	else
+		echo "$target_table fail" $cdate >> ~/workspace/runlog.log
+	fi
+
+	echo " -- end import data of $cdate -- "
+	echo ""
+	echo ""
+
+done
+
+
+
