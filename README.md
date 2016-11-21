@@ -33,5 +33,9 @@ code '{% for column in db.tables[0].columns %}
 {% endfor %}
 '
 ```
+```bash
+code phalcon/start.twig
+```
+
 ## Vim Plugin
 [https://github.com/shenopkss/code-master-vim](https://github.com/shenopkss/code-master-vim)
