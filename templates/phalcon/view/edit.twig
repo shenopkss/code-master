@@ -1,0 +1,87 @@
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>
+            {{ table.name }}
+            <small>Control panel</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
+            <li class="active">{{ table.name }}</li>
+        </ol>
+    </section>
+
+    <!-- Main content -->
+    <section class="content" id="content">
+        <div class="row">
+            <!-- Left col -->
+            <div class="col-md-12">
+                <!-- MAP & BOX PANE -->
+                <div class="box box-success">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">Edit</h3>
+                    </div>
+                    <!-- /.box-header -->
+                    <div class="box-body">
+                    <input type="hidden" v-model="entity.id">
+{% for column in table.noForeignKeys %}
+                        <div class="form-group">
+                            <label>{{ column.name }}</label>
+{% if column.size >= 500 %}
+                            <textarea v-model="entity.{{column.name }}" class="form-control" rows="10"></textarea>
+{% else %}
+                            <input type="text" class="form-control" id="input_{{column.name }}" name="{{ column.name }}" placeholder="" v-model="entity.{{column.name}}">
+{% endif %}
+                        </div>
+{% endfor %}
+{% for column in table.foreignKeys %}
+                        <div class="form-group">
+                            <label>{{ column.name }}</label>
+                            <select id="" name="" class="form-control" v-model="entity.{{column.name}}">
+                                <option v-for="param in {{ column.referenceTable.name }}s" v-bind:value="param.id">
+                                {[ param.name]}
+                                </option>
+                            </select>
+                        </div>
+{% endfor %}
+                    </div>
+                    <div class="box-footer clearfix">
+                        <button type="button" v-on:click="save()" class="btn btn-primary">保存</button>
+                    </div>
+                    <!-- /.box-body -->
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- /.content -->
+</div>
+<script>
+    var vue = new Vue({
+        el: '#content',
+        data: {
+            entity:{{ '{{'}}entity | json_encode{{'}}'}},
+{% for column in table.foreignKeys %}
+            {{ column.referenceTable.name }}s : {{ '{{'}}{{ column.referenceTable.name }}s | json_encode{{'}}'}},
+{% endfor %}
+        },
+        ready:function(){
+        },
+        components: {
+        },
+        methods:{
+            save:function(){
+                this.$http.post('/{{ table.name }}/save', this.entity).then(function(response){
+                    if(response.data.is_success === true){
+                        alert('保存成功');
+                        location.href = "/{{ table.name }}";
+                    }else{
+                        alert('保存失败，请联系管理员');
+                    }
+                }, function(response){
+                    alert('系统异常，请联系管理员');
+                });
+            }
+        },
+    });
+</script>
+

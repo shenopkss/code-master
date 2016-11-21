@@ -1,0 +1,32 @@
+<?php
+namespace Plu\{{ db.name | camel }}\Models;
+
+use Phalcon\Mvc\Model,
+    Phalcon\DI,
+    Phalcon\Db\Column;
+
+class {{ table.name | camel }} extends Model {
+
+    public function initialize() {
+        $this->setConnectionService('db.bigdata.report');
+    }
+
+    public function beforeSave() {
+        $now = date('Y-m-d H:i:s', time());
+        $this->updated = $now;
+        if(empty($this->created)){
+            $this->created = $now;
+        }
+    }
+
+    public function afterSave() {
+    }
+
+    public function getSource() {
+        return "{{ table.name }}";
+    }
+
+}
+
+?>
+

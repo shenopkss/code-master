@@ -1,0 +1,9 @@
+{% for table in db.tables %}
+{% set data = {'table': table, 'db' : db} %}  
+{{ render('phalcon/controller.twig', data, "#{db.name}/controller/#{table.name|camel}Controller.php")}}
+{{ render('phalcon/model.twig', data, "#{db.name}/model/#{table.name | camel }.php")}}
+{{ render('phalcon/view/index.twig', data, "#{db.name}/view/#{table.name}/index.html")}}
+{{ render('phalcon/view/add.twig', data, "#{db.name}/view/#{table.name}/add.html")}}
+{{ render('phalcon/view/edit.twig', data, "#{db.name}/view/#{table.name}/edit.html")}}
+{% endfor %}
+{{ render('phalcon/router.twig', {'db':db}, "#{db.name}/router.php")}}

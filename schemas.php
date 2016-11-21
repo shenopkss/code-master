@@ -3,6 +3,7 @@
 class DB{
     public $name;
     public $tables = [];
+    public $tablesMap = [];
     public $commands = [];
     public $views = [];
 
@@ -17,6 +18,7 @@ class Table{
     public $primaryKey = [];
     public $columns = [];
     public $foreignKeys = [];
+    public $noForeignKeys = [];
 
     function __construct($obj){
         $this->name = $obj->TABLE_NAME;
@@ -28,6 +30,7 @@ class View{}
 
 class Column{
     public $table;
+    public $referenceTable;
     public $name;
     public $NonNull;
     public $type;
@@ -35,9 +38,4 @@ class Column{
     public $precision;
     public $scale;
     public $size;
-
-    function __construct($obj){
-        $this->name = $obj->COLUMN_NAME;
-        $this->type = $obj->DATA_TYPE;
-    }
 }

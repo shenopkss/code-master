@@ -26,7 +26,7 @@ if(strpos($params, '.twig') === false){
 }
 
 $function = new Twig_SimpleFunction('render', function($template, $data, $file) use ($twig, $filesystem) {
-    $content = $twig->render($template, ['data' => $data]);
+    $content = $twig->render($template, $data);
     $filesystem->put($file, $content);
 });
 $twig->addFunction($function);
@@ -37,20 +37,17 @@ $filter = new Twig_SimpleFilter('underscore', function ($string) {
 });
 $twig->addFilter($filter);
 $camelfilter = new Twig_SimpleFilter('camel', function ($string) {
-    $string = preg_replace_callback(
-        "/(_([a-z]))/",
-        function($match){
-            return strtoupper($match[2]);
-        },
-        $string
-    );
-    return preg_replace_callback(
-        "/^\\w/",
-        function($match){
-            return strtoupper($match[0]);
-        },
-        $string
-    );
+    $result = '';
+    $arr = explode('_', $string);
+    foreach ($arr as $str) {
+        if(strlen($str) > 3){
+            $result .= strtoupper($str[0]) . substr($str, 1, strlen($str) - 1 );
+        }else{
+            $result .= strtoupper($str);
+        }
+    }
+
+    return $result;
 });
 $twig->addFilter($camelfilter);
 
@@ -104,18 +101,46 @@ $query = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 
 $tb_objs = Capsule::select($query);
 foreach($tb_objs as $tb_obj){
     $table = new Table($tb_obj);
-    $columns = Capsule::select("select * from information_schema.COLUMNS where table_name = '" . $table->name . "' and TABLE_SCHEMA = '" . $dbName . "'");
+    $columns = Capsule::select("select COLUMN_NAME,DATA_TYPE,CHARACTER_MAXIMUM_LENGTH from information_schema.COLUMNS where table_name = '" . $table->name . "' and TABLE_SCHEMA = '" . $dbName . "'");
     foreach ($columns  as $column_obj) {
-        $column = new Column($column_obj);
+        if(in_array($column_obj->COLUMN_NAME, ['id', 'updated', 'created'])){
+            continue;
+        }
+        $column = new Column();
+        $column->name = $column_obj->COLUMN_NAME;
+        $column->type = $column_obj->DATA_TYPE;
+        $column->size = intval($column_obj->CHARACTER_MAXIMUM_LENGTH);
+        var_dump($column->size);
+        $column->table = $table;
+
         $table->columns[] = $column;
-    }
-    $fks = Capsule::select("select TABLE_NAME,COLUMN_NAME,CONSTRAINT_NAME, REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where CONSTRAINT_NAME like 'fk_%' and table_name = '" . $table->name . "' and TABLE_SCHEMA ='" . Capsule::connection()->getDatabaseName() . "'");
-    foreach ($fks as $fk) {
-        $table->foreignKeys[] = $fk->REFERENCED_TABLE_NAME;
+        $table->db = $db;
     }
     $db->tables[] = $table;
-    $db->tables[$table->name] = $table;
+    $db->tablesMap[$table->name] = $table;
+}
+foreach($db->tables as $table){
+    $fks = Capsule::select("select TABLE_NAME,COLUMN_NAME,CONSTRAINT_NAME, REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where CONSTRAINT_NAME like 'fk_%' and table_name = '" . $table->name . "' and TABLE_SCHEMA ='" . Capsule::connection()->getDatabaseName() . "'");
+    foreach ($fks as $fk) {
+        foreach ($table->columns as $column) {
+            if($fk->COLUMN_NAME == $column->name){
+                $column->referenceTable = $db->tablesMap[$fk->REFERENCED_TABLE_NAME];
+                $table->foreignKeys[] = clone $column;
+            }
+        }
+    }
+    foreach ($table->columns as $column) {
+        $isFk = false;
+        foreach ($table->foreignKeys as $fk) {
+            if($column->name == $fk->name){
+                $isFk = true;
+                break;
+            }
+        }
+        if($isFk === false){
+            $table->noForeignKeys[] = clone $column;
+        }
+    }
 }
 
 print $twig->render($params, ['db' => $db]);
-print "\n";

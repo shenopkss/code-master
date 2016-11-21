@@ -1,0 +1,10 @@
+<?php
+{% set namespace = "Plu\\#{ db.name | camel }" %}
+use Phalcon\Mvc\Router\Annotations as Router,
+    Phalcon\DI;
+
+$router = new Router(false);
+$router->removeExtraSlashes(true);
+{% for table in db.tables %}
+$router->addResource("{{ namespace }}\Controllers\Admin\{{ table.name | camel }}", "/{{ table.name }}");
+{% endfor %}

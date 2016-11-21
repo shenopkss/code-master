@@ -1,0 +1,111 @@
+<?php
+{% set namespace = "Plu\\#{ db.name | camel }" %}
+
+namespace {{ namespace }}\Controllers\Admin;
+
+use {{ namespace }}\Models\{{ table.name | camel }};
+{% for column in table.foreignKeys %}
+use {{ namespace }}\Models\{{ column.referenceTable.name | camel }};
+{% endfor %}
+
+/**
+ * @RoutePrefix('/{{table.name}}')
+ */
+class {{table.name | camel }}Controller extends BIBaseController {
+
+    public function initialize() {
+        parent::initialize();
+        $actionName = $this->dispatcher->getActionName();
+        $this->view->pick("admin/{{ table.name }}/$actionName");
+    }
+
+    /**
+     * @Get('/')
+     * @ACL(resource='{{ table.name }}.view')
+     */
+    public function indexAction() {
+        $phql = "SELECT 
+{% for column in table.columns %}
+            {{ table.name | camel}}.{{ column.name }} as {{ column.name }},
+{% endfor %}
+{% for column in table.foreignKeys %}
+{% for referenceColumn in column.referenceTable.columns %}
+            {{ column.referenceTable.name | camel }}.{{referenceColumn.name}} as {{ column.referenceTable.name}}_{{referenceColumn.name}},
+{% endfor %}
+{% endfor %}
+            {{ table.name | camel}}.id as id
+            FROM {{ namespace }}\Models\{{ table.name | camel }} as {{ table.name | camel }}
+{% for column in table.foreignKeys %}
+{% set referenceTable = "#{ column.referenceTable.name | camel }" %}
+            LEFT JOIN {{ namespace }}\Models\{{ referenceTable }} as {{ referenceTable }} ON {{ table.name | camel }}.{{ column.name }} = {{ referenceTable }}.id
+{% endfor %}
+        ";
+        $modelsManager = $this->getDI()->get('modelsManager');
+        $rows = $modelsManager->executeQuery($phql, [])->toArray();
+        $this->view->setVar('rows', $rows);
+    }
+
+    /**
+     * @Route('/save')
+     * @ACL(resource='{{ table.name }}.edit')
+     */
+    public function saveAction() {
+        $data = $this->request->getJsonRawBody(true);
+        $entity = new {{ table.name | camel }}();
+        if(isset($data['id'])){
+            $entity = {{ table.name | camel }}::findFirst($data['id']);
+        }
+{% for column in table.columns %}
+        $entity->{{ column.name }} = $data['{{ column.name }}'];
+{% endfor %}
+        if ($entity->save() === false) {
+            $result = [ 'is_success' => false, 'msg' => '保存失败，请联系管理员'];
+        }else{
+            $result = [ 'is_success' => true];
+        }
+
+        return $this->json(['is_success' => true]);
+    }
+
+    /**
+     * @Delete('/{id}')
+     * @ACL(resource='{{ table.name }}.delete')
+     */
+    public function deleteAction($id) {
+        $entity = {{ table.name | camel }}::findFirst($id);
+        $result  = [];
+        if ($entity->delete() === false) {
+            $result = [ 'is_success' => false, 'msg' => '删除失败，请联系管理员'];
+        }else{
+            $result = [ 'is_success' => true];
+        }
+        return $this->json($result);
+    }
+
+    /**
+     * @Get('/add')
+     * @ACL(resource='{{ table.name }}.add')
+     */
+    public function addAction() {
+{% for column in table.foreignKeys %}
+        ${{ column.referenceTable.name }}s = {{ column.referenceTable.name | camel }}::find()->toArray();
+        $this->view->setVar('{{ column.referenceTable.name }}s', ${{ column.referenceTable.name }}s);
+{% endfor %}
+    }
+
+    /**
+     *
+     * @Get('/edit/{id}')
+     * @ACL(resource='{{ table.name }}.edit')
+     */
+    public function editAction($id) {
+        $entity = {{ table.name | camel }}::findFirst($id);
+        $this->view->setVar('entity', $entity);
+{% for column in table.foreignKeys %}
+        ${{ column.referenceTable.name }}s = {{ column.referenceTable.name | camel }}::find()->toArray();
+        $this->view->setVar('{{ column.referenceTable.name }}s', ${{ column.referenceTable.name }}s);
+{% endfor %}
+    }
+}
+
+
