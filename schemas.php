@@ -32,6 +32,7 @@ class Column{
     public $table;
     public $referenceTable;
     public $name;
+    public $comment;
     public $NonNull;
     public $type;
     public $isUnique;

@@ -101,16 +101,16 @@ $query = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 
 $tb_objs = Capsule::select($query);
 foreach($tb_objs as $tb_obj){
     $table = new Table($tb_obj);
-    $columns = Capsule::select("select COLUMN_NAME,DATA_TYPE,CHARACTER_MAXIMUM_LENGTH from information_schema.COLUMNS where table_name = '" . $table->name . "' and TABLE_SCHEMA = '" . $dbName . "'");
+    $columns = Capsule::select("select COLUMN_NAME,DATA_TYPE,CHARACTER_MAXIMUM_LENGTH,COLUMN_COMMENT from information_schema.COLUMNS where table_name = '" . $table->name . "' and TABLE_SCHEMA = '" . $dbName . "'");
     foreach ($columns  as $column_obj) {
         if(in_array($column_obj->COLUMN_NAME, ['id', 'updated', 'created'])){
             continue;
         }
         $column = new Column();
         $column->name = $column_obj->COLUMN_NAME;
+        $column->comment = $column_obj->COLUMN_COMMENT;
         $column->type = $column_obj->DATA_TYPE;
         $column->size = intval($column_obj->CHARACTER_MAXIMUM_LENGTH);
-        var_dump($column->size);
         $column->table = $table;
 
         $table->columns[] = $column;
