@@ -28,7 +28,7 @@ DB_PASSWORD=
 # 使用
 ## CLI
 ```bash
-code '{% for column in db.tables[0].columns %}
+php app.php '{% for column in db.tables[0].columns %}
 {{column.name}}
 {% endfor %}
 '
