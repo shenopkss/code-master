@@ -28,13 +28,13 @@ DB_PASSWORD=
 # 使用
 ## CLI
 ```bash
-php app.php '{% for column in db.tables[0].columns %}
+code '{% for column in db.tables[0].columns %}
 {{column.name}}
 {% endfor %}
 '
 ```
 ```bash
-php app.php phalcon/start.twig
+code phalcon/start.twig
 ```
 
 ## Vim Plugin
