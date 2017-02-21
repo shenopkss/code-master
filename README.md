@@ -34,7 +34,7 @@ php app.php '{% for column in db.tables[0].columns %}
 '
 ```
 ```bash
-code phalcon/start.twig
+php app.php phalcon/start.twig
 ```
 
 ## Vim Plugin
