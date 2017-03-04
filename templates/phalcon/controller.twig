@@ -3,18 +3,17 @@
 
 namespace {{ namespace }}\Controllers\Admin;
 
-use {{ namespace }}\Models\{{ table.name | camel }};
+use {{ namespace }}\Models\ResourcePool\{{ table.name | camel }};
 {% for column in table.foreignKeys %}
-use {{ namespace }}\Models\{{ column.referenceTable.name | camel }};
+use {{ namespace }}\Models\ResourcePool\{{ column.referenceTable.name | camel }};
 {% endfor %}
 
 /**
  * @RoutePrefix('/{{table.name}}')
  */
-class {{table.name | camel }}Controller extends BIBaseController {
+class {{table.name | camel }}Controller extends ControllerBase {
 
     public function initialize() {
-        parent::initialize();
         $actionName = $this->dispatcher->getActionName();
         $this->view->pick("admin/{{ table.name }}/$actionName");
     }
@@ -24,7 +23,7 @@ class {{table.name | camel }}Controller extends BIBaseController {
      * @ACL(resource='{{ table.name }}.view')
      */
     public function indexAction() {
-        $phql = "SELECT 
+        $phql = "SELECT
 {% for column in table.columns %}
             {{ table.name | camel}}.{{ column.name }} as {{ column.name }},
 {% endfor %}
@@ -34,10 +33,10 @@ class {{table.name | camel }}Controller extends BIBaseController {
 {% endfor %}
 {% endfor %}
             {{ table.name | camel}}.id as id
-            FROM {{ namespace }}\Models\{{ table.name | camel }} as {{ table.name | camel }}
+            FROM {{ namespace }}\Models\ResourcePool\{{ table.name | camel }} as {{ table.name | camel }}
 {% for column in table.foreignKeys %}
 {% set referenceTable = "#{ column.referenceTable.name | camel }" %}
-            LEFT JOIN {{ namespace }}\Models\{{ referenceTable }} as {{ referenceTable }} ON {{ table.name | camel }}.{{ column.name }} = {{ referenceTable }}.id
+            LEFT JOIN {{ namespace }}\Models\ResourcePool\{{ referenceTable }} as {{ referenceTable }} ON {{ table.name | camel }}.{{ column.name }} = {{ referenceTable }}.id
 {% endfor %}
         ";
         $modelsManager = $this->getDI()->get('modelsManager');
@@ -64,7 +63,7 @@ class {{table.name | camel }}Controller extends BIBaseController {
             $result = [ 'is_success' => true];
         }
 
-        return $this->json(['is_success' => true]);
+        return $this->json($result);
     }
 
     /**
