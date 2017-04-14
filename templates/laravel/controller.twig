@@ -1,0 +1,119 @@
+<?php namespace App\Http\Controllers;
+
+use App\Http\Requests;
+use App\Http\Controllers\Controller;
+
+use Illuminate\Http\Request;
+use App\{{table.name | camel }};
+{% for column in table.foreignKeys %}
+use App\{{column.referenceTable.name | camel }};
+{% endfor %}
+
+use Redirect, Input;
+use Auth;
+
+class {{table.name | camel }}Controller extends AppController {
+
+	/**
+	 * Display a listing of the resource.
+	 *
+	 * @return Response
+	 */
+	public function index()
+	{
+        $data = {{table.name | camel }}::with([
+        {% for column in table.foreignKeys %}
+        '{{column.referenceTable.name | camel }}',
+        {% endfor %}
+        ])->get();
+        return view('{{table.name | camel }}.index',[
+            'data' => $data
+        ]);
+	}
+
+    /**
+	 * Show the form for creating a new resource.
+	 *
+	 * @return Response
+	 */
+	public function create()
+	{
+        return view('{{table.name | camel }}.create', [
+            {% for column in table.foreignKeys %}
+            '{{column.referenceTable.name | camel }}s' => {{column.referenceTable.name | camel }}::all(),
+            {% endfor %}
+        ]);
+	}
+
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @return Response
+     */
+    public function store()
+    {
+        $entity = {{ table.name | camel}}::create(Input::all());
+        if ($entity) {
+            return Redirect::to('/{{ table.name | camel }}/edit/' . $entity->id);
+        } else {
+            return Redirect::back()->withInput()->withErrors('系统异常，请重试！');
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return Response
+     */
+    public function show($id)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return Response
+     */
+    public function edit($id)
+    {
+        return view('{{table.name | camel }}.edit', [
+            'data' => {{ table.name | camel }}::find($id),
+            {% for column in table.foreignKeys %}
+            '{{column.referenceTable.name | camel }}s' => {{column.referenceTable.name | camel }}::all(),
+            {% endfor %}
+            ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  int  $id
+     * @return Response
+     */
+    public function update($id)
+    {
+        $entity = {{ table.name | camel }}::where('id', $id)->update(Input::except(["_token"]));
+        if ($entity) {
+        return Redirect::to('/{{ table.name | camel }}/edit/' . $id);
+        } else {
+            return Redirect::back()->withInput()->withErrors('提交失败，请重试！');
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return Response
+     */
+	public function destroy($id)
+	{
+        {{ table.name | camel }}::find($id)->delete();
+        $result = [ 'isSuccess' => true, 'msg' => '删除成功' ];
+        return response()->json($result);
+	}
+}

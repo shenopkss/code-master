@@ -1,0 +1,9 @@
+{% for table in db.tables %}
+{% set data = {'table': table, 'db' : db} %}
+{{ render('laravel/controller.twig', data, "#{db.name}/controller/#{table.name|camel}Controller.php")}}
+{{ render('laravel/model.twig', data, "#{db.name}/model/#{table.name|camel}.php")}}
+{{ render('laravel/view/create.twig', data, "#{db.name}/view/#{table.name|camel}/create.blade.php")}}
+{{ render('laravel/view/edit.twig', data, "#{db.name}/view/#{table.name|camel}/edit.blade.php")}}
+{{ render('laravel/view/index.twig', data, "#{db.name}/view/#{table.name|camel}/index.blade.php")}}
+{{ render('laravel/router.twig', {'db':db}, "#{db.name}/router.php")}}
+{% endfor %}
