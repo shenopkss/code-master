@@ -103,7 +103,7 @@ foreach($tb_objs as $tb_obj){
     $table = new Table($tb_obj);
     $columns = Capsule::select("select COLUMN_NAME,DATA_TYPE,CHARACTER_MAXIMUM_LENGTH,COLUMN_COMMENT from information_schema.COLUMNS where table_name = '" . $table->name . "' and TABLE_SCHEMA = '" . $dbName . "'");
     foreach ($columns  as $column_obj) {
-        if(in_array($column_obj->COLUMN_NAME, ['id', 'updated', 'created'])){
+        if(in_array($column_obj->COLUMN_NAME, ['id', 'updated', 'created', 'updated_at', 'created_at', 'deleted_at'])){
             continue;
         }
         $column = new Column();
