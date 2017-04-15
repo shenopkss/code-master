@@ -41,7 +41,7 @@
                                 @foreach ($data as $item)
                                 <tr>
                                     {% for column in table.noForeignKeys%}
-                                    <td>{{ column.name }}</td>
+                                    <td>{{'{{'}}$item->{{ column.name }}{{'}}'}}</td>
                                     {% endfor %}
                                     {% for column in table.foreignKeys %}
                                     <td>{{ '{{' }}$item->{{ column.referenceTable.name }}->name{{ '}}' }}</td>

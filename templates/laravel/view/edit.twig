@@ -48,7 +48,7 @@
                             {% for column in table.noForeignKeys%}
                             <div class="form-group">
                                 <label>{{ column.name }}</label>
-                                <input type="text" class="form-control" name="{{ column.name }}" placeholder="{{ column.name }}" value="{{ '{{'}} $data->content{{ '}}' }}">
+                                <input type="text" class="form-control" name="{{ column.name }}" placeholder="{{ column.name }}" value="{{ '{{'}} $data->{{ column.name ~ '}}' }}">
                             </div>
                             {% endfor %}
 
