@@ -20,9 +20,7 @@ if(strpos($params, '.twig') === false){
     $twig = new \Twig_Environment(new \Twig_Loader_String());
 }else{
     $loader = new Twig_Loader_Filesystem('./templates');
-    $twig = new Twig_Environment($loader, array(
-        // 'cache' => '/path/to/compilation_cache',
-    ));
+    $twig = new Twig_Environment($loader, ['debug' => true, 'cache' => false]);
 }
 
 $function = new Twig_SimpleFunction('render', function($template, $data, $file) use ($twig, $filesystem) {
@@ -95,6 +93,40 @@ $hiveFilter = new Twig_SimpleFilter('hive', function ($string) {
 });
 $twig->addFilter($hiveFilter);
 
+$test_valueFilter = new Twig_SimpleFilter('test_value', function ($column) {
+    $value = '';
+    switch(strtoupper($column->type)){
+    case 'CHAR':
+    case 'VARCHAR':
+    case 'TINYTEXT':
+    case 'TEXT':
+    case 'MEDIUMTEXT':
+    case 'LONGTEXT':
+    case 'ENUM':
+    case 'DATETIME':
+    case 'TIME':
+    case 'YEAR':
+        $value = $column->name . '0';
+        break;
+    case 'TINYINT':
+    case 'SMALLINT':
+    case 'MEDIUMINT':
+    case 'INT':
+    case 'TIMESTAMP':
+    case 'BIGINT':
+    case 'FLOAT':
+    case 'DOUBLE':
+    case 'DECIMAL':
+        $value = 1;
+        break;
+    case 'DATE':
+        $value = '2019-04-26 00:00:00';
+        break;
+    }
+    return $value;
+});
+$twig->addFilter($test_valueFilter);
+
 $dbName = Capsule::connection()->getDatabaseName();
 $db = new DB($dbName);
 $query = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '" . Capsule::connection()->getDatabaseName() . "'";
@@ -120,6 +152,9 @@ foreach($tb_objs as $tb_obj){
     $db->tablesMap[$table->name] = $table;
 }
 foreach($db->tables as $table){
+    $pk = Capsule::select("select TABLE_NAME,COLUMN_NAME,CONSTRAINT_NAME, REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where CONSTRAINT_NAME like 'PRIMARY' and table_name = '" . $table->name . "' and TABLE_SCHEMA ='" . Capsule::connection()->getDatabaseName() . "' limit 1");
+    $table->primaryKey = $pk[0]->COLUMN_NAME;
+
     $fks = Capsule::select("select TABLE_NAME,COLUMN_NAME,CONSTRAINT_NAME, REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where CONSTRAINT_NAME like 'fk_%' and table_name = '" . $table->name . "' and TABLE_SCHEMA ='" . Capsule::connection()->getDatabaseName() . "'");
     foreach ($fks as $fk) {
         foreach ($table->columns as $column) {
@@ -143,4 +178,4 @@ foreach($db->tables as $table){
     }
 }
 
-print $twig->render($params, ['db' => $db]);
+$twig->render($params, ['db' => $db]);

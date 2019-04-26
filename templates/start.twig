@@ -1,0 +1,11 @@
+{% for column in db.tablesMap['game_statistics'].columns %}
+{{column.name}} = %s,
+{% endfor %}
+
+{% for column in db.tablesMap['game_statistics'].columns %}
+{{column.name}},
+{% endfor %}
+
+{% for column in db.tablesMap['game_statistics'].columns %}
+%s,
+{% endfor %}

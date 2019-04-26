@@ -4,31 +4,49 @@ use App\Http\Requests;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
-use App\{{table.name | camel }};
+use App\Models\{{table.name | camel }};
 {% for column in table.foreignKeys %}
-use App\{{column.referenceTable.name | camel }};
+use App\Models\{{column.referenceTable.name | camel }};
 {% endfor %}
 
 use Redirect, Input;
 use Auth;
 
-class {{table.name | camel }}Controller extends AppController {
+class {{table.name | camel }}Controller extends Controller {
 
 	/**
 	 * Display a listing of the resource.
 	 *
 	 * @return Response
 	 */
-	public function index()
+	public function index(Request $request)
 	{
-        $data = {{table.name | camel }}::with([
-        {% for column in table.foreignKeys %}
-        '{{column.referenceTable.name | camel }}',
+
+        $page_size = $request->query('page_size', 20);
+        $page_index = $request->query('page_index', 1);
+
+        {% for column in table.columns %}
+            {% if column.name not in ['id', 'created_at', 'updated_at', 'deleted_at'] %}
+        ${{column.name}} = $request->query('{{column.name}}');
+            {% endif %}
         {% endfor %}
-        ])->get();
-        return view('{{table.name | camel }}.index',[
-            'data' => $data
-        ]);
+
+        $query = {{table.name | camel }}::query()->with([{% for column in table.foreignKeys %}'{{ column.referenceTable.name }}', {% endfor %}]);
+
+        $totalQuery = {{table.name | camel }}::query();
+
+        {% for column in table.columns %}
+            {% if column.name not in ['id', 'created_at', 'updated_at', 'deleted_at'] %}
+        if(${{column.name}} != null){
+            $query->where('{{column.name}}', ${{column.name}});
+            $totalQuery->where('{{column.name}}', ${{column.name}});
+        }
+            {% endif %}
+        {% endfor %}
+        $total = $totalQuery->count();
+        $rows = $query->take($page_size)->offset(($page_index - 1) * $page_size)->get();
+        $result = ['rows' => $rows, 'total' => $total, 'page_index' => $page_index, 'page_size' => $page_size];
+        return $this->success($result);
 	}
 
     /**
@@ -51,13 +69,15 @@ class {{table.name | camel }}Controller extends AppController {
      *
      * @return Response
      */
-    public function store()
+    public function store(Request $request)
     {
-        $entity = {{ table.name | camel}}::create(Input::all());
+        $params = $request->only([{% for column in table.columns %}'{{column.name}}', {% endfor %}]);
+        $params['updated_by'] = Auth::user()->name;
+        $entity = {{ table.name | camel}}::create($params);
         if ($entity) {
-            return Redirect::to('/{{ table.name | camel }}/edit/' . $entity->id);
+            return $this->success($entity);
         } else {
-            return Redirect::back()->withInput()->withErrors('系统异常，请重试！');
+            return $this->failed();
         }
     }
 
@@ -69,7 +89,8 @@ class {{table.name | camel }}Controller extends AppController {
      */
     public function show($id)
     {
-        //
+        $entity = {{table.name | camel }}::find($id);
+        return $this->success($entity);
     }
 
     /**
@@ -94,13 +115,15 @@ class {{table.name | camel }}Controller extends AppController {
      * @param  int  $id
      * @return Response
      */
-    public function update($id)
+    public function update($id, Request $request)
     {
-        $entity = {{ table.name | camel }}::where('id', $id)->update(Input::except(["_token"]));
-        if ($entity) {
-        return Redirect::to('/{{ table.name | camel }}/edit/' . $id);
+        $params = $request->only([{% for column in table.columns %}'{{column.name}}', {% endfor %}]);
+        $params['updated_by'] = Auth::user()->name;
+        $result = {{ table.name | camel }}::where('id', $id)->update($params);
+        if ($result !== false) {
+            return $this->success($result);
         } else {
-            return Redirect::back()->withInput()->withErrors('提交失败，请重试！');
+            return $this->failed($result);
         }
     }
 
@@ -112,8 +135,15 @@ class {{table.name | camel }}Controller extends AppController {
      */
 	public function destroy($id)
 	{
-        {{ table.name | camel }}::find($id)->delete();
-        $result = [ 'isSuccess' => true, 'msg' => '删除成功' ];
-        return response()->json($result);
+        $result = true;
+    {% for ft in table.foreignTables %}
+        $result &= {{ ft.name | camel }}::where('{{table.name}}_id', $id)->delete();
+    {% endfor %}
+        $result &= {{ table.name | camel }}::find($id)->delete();
+        if($result){
+            return $this->success();
+        }else{
+            return $this->failed();
+        }
 	}
 }

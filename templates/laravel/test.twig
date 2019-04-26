@@ -1,0 +1,31 @@
+<?php
+
+namespace App\Tests;
+
+/**
+ * Class ExampleTest
+ * @package App\Tests
+ */
+class AppTest extends TestCase
+{
+    /**
+     * A basic test example.
+     *
+     * @return void
+     */
+    public function testCreate()
+    {
+        $params = [
+        {% for column in table.columns %}{% if column.name not in ['created_at', 'updated_at', 'deleted_at']%}
+        '{{ column.name }}' => '{{ column | test_value}}',
+        {% endif %}{% endfor %}
+        ];
+        $response = $this->json('POST', '/{{table.name}}', $params);
+
+        $response
+            ->assertStatus(201)
+            ->assertJson([
+                "ret" => 0
+            ]);
+    }
+}

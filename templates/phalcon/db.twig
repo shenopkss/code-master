@@ -1,10 +1,13 @@
 # db schema
 
 {% for table in db.tables %}
-{{ table.name }}
+
+### {{ table.name }}
+
 | 字段 | 说明 |
 | --- | --- |
 {% for column in table.columns %}
 |{{ column.name }}|{{ column.comment}}|
 {% endfor %}
 {% endfor %}
+

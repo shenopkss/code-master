@@ -1,14 +1,11 @@
-<?php namespace App;
+<?php
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class {{ table.name | camel }} extends Model {
-    use SoftDeletes;
-    protected $dates = ['deleted_at'];
-    protected $casts = [
-        'id' => 'integer'
-    ];
+protected $casts = [ '{{ table.primaryKey }}' => 'integer', {% for column in table.columns %}{% if column.type | upper in ['TINYINT', 'SMALLINT', 'MEDIUMINT', 'INT', 'BIGINT'] %}'{{ column.name }}' => 'integer', {% endif %}{% endfor %} ];
 
     protected $table = '{{ table.name }}';
 
@@ -20,7 +17,14 @@ class {{ table.name | camel }} extends Model {
     {% for column in table.foreignKeys %}
     public function {{ column.referenceTable.name }}()
     {
-    return $this->belongsTo('App\{{ column.referenceTable.name | camel }}');
+    return $this->belongsTo('App\Models\{{ column.referenceTable.name | camel }}');
+    }
+    {% endfor %}
+
+    {% for ftable in table.foreignTables %}
+    public function {{ ftable.name }}s()
+    {
+    return $this->hasMany('App\Models\{{ ftable.name | camel }}', '{{ table.primaryKey }}', 'ftable.primaryKey');
     }
     {% endfor %}
 }
