@@ -1,0 +1,181 @@
+<?php
+namespace App\Http\Traits;
+
+use App\Http\Requests;
+use App\Http\Controllers\Controller;
+
+use Illuminate\Http\Request;
+use App\Models\{{table.name | camel }};
+{% for column in table.foreignKeys %}
+use App\Models\{{column.referenceTable.name | camel }};
+{% endfor %}
+{% for ref in table.refTables%}
+use App\Models\{{ref.name | camel }};
+{% endfor %}
+
+use Redirect, Input;
+use Auth;
+
+trait {{table.name | camel }}Restable {
+
+	/**
+	 * Display a listing of the resource.
+	 *
+	 * @return Response
+	 */
+	public function index(Request $request)
+	{
+        $page = intval($request->query('page', 1));
+        $per_page = intval($request->query('per_page', 20));
+
+        {% for column in table.columns %}
+            {% if column.name not in ['id', 'created_at', 'updated_at', 'deleted_at'] %}
+        ${{column.name}} = $request->query('{{column.name}}');
+            {% endif %}
+        {% endfor %}
+
+        $query = {{table.name | camel }}::query()->with([{% for column in table.foreignKeys %}'{{ column.referenceTable.name }}', {% endfor %}]);
+
+        {% for column in table.columns %}
+            {% if column.name not in ['id', 'created_at', 'updated_at', 'deleted_at'] %}
+            if(${{column.name}} != null){
+                $query->where('{{column.name}}', ${{column.name}});
+            }
+            {% endif %}
+        {% endfor %}
+        $result = $query->paginate($per_page, ["*"], 'page', $page);
+        return $this->success($result);
+	}
+
+    /**
+	 * Show the form for creating a new resource.
+	 *
+	 * @return Response
+	 */
+	public function create()
+	{
+        return view('{{table.name | camel }}.create', [
+            {% for column in table.foreignKeys %}
+            '{{column.referenceTable.name | camel }}s' => {{column.referenceTable.name | camel }}::all(),
+            {% endfor %}
+        ]);
+	}
+
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @return Response
+     */
+    public function store(Request $request)
+    {
+        $params = $request->only([{% for column in table.columns %}'{{column.name}}', {% endfor %}]);
+        $params['updated_by'] = Auth::user()->name;
+        {% for column in table.columns %}
+            {% if '(json)' in column.comment %}
+                $params['{{column.name}}'] = json_encode($params['{{column.name}}']);
+            {% endif%}
+        {% endfor %}
+        $entity = {{ table.name | camel}}::create($params);
+        if ($entity) {
+            {% for ref in table.refTables%}
+                ${{ref.name}}s = $request->input('{{ref.name}}s');
+                if(${{ref.name}}s){
+                    foreach(${{ref.name}}s as $item){
+                        $item['{{table.name}}_id'] = $entity->{{table.primaryKey}};
+                        {{ ref.name | camel }}::create($item);
+                    }
+                }
+            {% endfor %}
+            return $this->success($entity);
+        } else {
+            return $this->failed();
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return Response
+     */
+    public function show($id)
+    {
+        $entity = {{table.name | camel }}::find($id);
+        {% for column in table.columns %}
+            {% if '(json)' in column.comment %}
+            $entity->{{column.name}} = json_decode($entity->{{column.name}}, true);
+            {% endif%}
+        {% endfor %}
+        return $this->success($entity);
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return Response
+     */
+    public function edit($id)
+    {
+        return view('{{table.name | camel }}.edit', [
+            'data' => {{ table.name | camel }}::find($id),
+            {% for column in table.foreignKeys %}
+            '{{column.referenceTable.name | camel }}s' => {{column.referenceTable.name | camel }}::all(),
+            {% endfor %}
+            ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  int  $id
+     * @return Response
+     */
+    public function update($id, Request $request)
+    {
+        $params = $request->only([{% for column in table.columns %}'{{column.name}}', {% endfor %}]);
+        $params['updated_by'] = Auth::user()->name;
+        {% for column in table.columns %}
+            {% if '(json)' in column.comment %}
+                $params['{{column.name}}'] = json_encode($params['{{column.name}}']);
+            {% endif%}
+        {% endfor %}
+        $result = {{ table.name | camel }}::where('{{table.primaryKey}}', $id)->update($params);
+        if ($result !== false) {
+            {% for ref in table.refTables%}
+                ${{ref.name}}s = $request->input('{{ref.name}}s');
+                if(${{ref.name}}s){
+                    {{ ref.name | camel }}::where('{{table.name}}_id', $id)->delete();
+                    foreach(${{ref.name}}s as $item){
+                        $item['{{table.name}}_id'] = $id;
+                        {{ ref.name | camel }}::create($item);
+                    }
+                }
+            {% endfor %}
+            return $this->success($result);
+        } else {
+            return $this->failed($result);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return Response
+     */
+	public function destroy($id)
+	{
+        $result = true;
+    {% for ft in table.refTables %}
+        $result &= {{ ft.name | camel }}::where('{{table.name}}_id', $id)->delete() !== false;
+    {% endfor %}
+        $result &= {{ table.name | camel }}::destroy($id) !== false;
+        if($result){
+            return $this->success();
+        }else{
+            return $this->failed();
+        }
+	}
+}

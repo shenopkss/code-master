@@ -1,0 +1,49 @@
+### 新建{{ table.name | camel }}
+
+```
+POST http://app-access-api.mg3721.com/{{table.name}}s
+```
+
+##### 请求参数
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+{% for column in table.columns %}
+{% if column.name not in ['created_at', 'updated_at', 'updated_by']%}
+|{{ column.name }}|{{ column.type|hive | lower }}| 是 | {{column.comment}}|
+{% endif %}
+{% endfor %}
+{% for ref in table.refTables%}
+|{{ ref.name }}s|array| 否 | 见 [{{ref.name | camel}}](#{{ref.name | camel}}) |
+{% endfor %}
+
+
+
+##### 返回参数
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| ret | int | 状态码，0表示成功，大于0表示失败|
+| msg| string| 返回相关错误信息( ret=0时无 )，只可作提示用，不得用作成功/失败判断依据 |
+| data | array | 见 [{{table.name | camel}}](#{{table.name | camel}})  |
+
+### 结构体
+
+##### {{ table.name | camel}}
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+{% for column in table.columns %}
+|{{ column.name }}|{{ column.type|hive | lower }}| {{column.comment}}|
+{% endfor %}
+
+{% for ref in table.refTables%}
+##### {{ ref.name | camel}}
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+{% for column in ref.columns %}
+{% if column.name not in ['{{ref.primaryKey}}', '{{table.name}}_id', 'created_at', 'updated_at', 'updated_by']%}
+|{{ column.name }}|{{ column.type|hive | lower }}| {{column.comment}}|
+{% endif %}
+{% endfor %}
+
+{% endfor %}

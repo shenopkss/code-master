@@ -5,7 +5,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class {{ table.name | camel }} extends Model {
-protected $casts = [ '{{ table.primaryKey }}' => 'integer', {% for column in table.columns %}{% if column.type | upper in ['TINYINT', 'SMALLINT', 'MEDIUMINT', 'INT', 'BIGINT'] %}'{{ column.name }}' => 'integer', {% endif %}{% endfor %} ];
+    protected $casts = [ '{{ table.primaryKey }}' => 'integer', {% for column in table.columns %}{% if column.type | upper in ['TINYINT', 'SMALLINT', 'MEDIUMINT', 'INT', 'BIGINT'] %}'{{ column.name }}' => 'integer', {% endif %}{% endfor %} ];
+
+    protected $primaryKey = '{{ table.primaryKey }}';
 
     protected $table = '{{ table.name }}';
 
@@ -21,10 +23,10 @@ protected $casts = [ '{{ table.primaryKey }}' => 'integer', {% for column in tab
     }
     {% endfor %}
 
-    {% for ftable in table.foreignTables %}
+    {% for ftable in table.refTables%}
     public function {{ ftable.name }}s()
     {
-    return $this->hasMany('App\Models\{{ ftable.name | camel }}', '{{ table.primaryKey }}', 'ftable.primaryKey');
+    return $this->hasMany('App\Models\{{ ftable.name | camel }}');
     }
     {% endfor %}
 }

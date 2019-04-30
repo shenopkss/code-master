@@ -1,9 +1,9 @@
 {
     "require": {
-        "vlucas/phpdotenv": "^2.4",
-        "twig/twig": "^1.25",
+        "vlucas/phpdotenv": "^3.3",
+        "twig/twig": "^2.8",
         "league/flysystem": "^1.0",
-        "illuminate/database": "^5.3",
-        "illuminate/events": "^5.3"
+        "illuminate/database": "^5.8",
+        "illuminate/events": "^5.8"
     }
 }

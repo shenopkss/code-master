@@ -7,7 +7,7 @@
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 {% for column in table.columns %}
-|{{ column.name }}|{{ column.type}}| 是 | {{column.comment}}|
+|{{ column.name }}|{{ column.type|hive}}| 是 | {{column.comment}}|
 {% endfor %}
 {% endfor %}
 

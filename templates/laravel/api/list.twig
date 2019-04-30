@@ -1,0 +1,63 @@
+### {{ table.name }}列表
+
+```
+GET http://app-access-api.mg3721.com/{{table.name}}s
+```
+
+##### 基础参数
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+|page| int | 是 | 请求分页页码|
+|per_page| int| 是 | 请求分页条数|
+
+##### 搜索参数
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+{% for column in table.columns %}
+{% if column.name not in ['created_at', 'updated_at']%}
+|{{ column.name }}|{{ column.type|hive | lower }}| 是 | {{column.comment}}|
+{% endif %}
+{% endfor %}
+
+
+##### 返回参数
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| ret | int | 状态码，0表示成功，大于0表示失败|
+| msg| string| 返回相关错误信息( ret=0时无 )，只可作提示用，不得用作成功/失败判断依据 |
+| data | array | 见[Paginate](#Paginate) |
+
+##### Paginate
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| current_page | int | 分页页码|
+| per_page | int | 分页数据条数|
+| total | int | 总条数|
+| last_page| int | 最后一页的页码 |
+| data | array | 见[{{table.name | camel}}](#{{table.name | camel}})  |
+
+##### {{ table.name | camel}}
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+{% for column in table.columns %}
+|{{ column.name }}|{{ column.type|hive | lower }}| {{column.comment}}|
+{% endfor %}
+{% for ref in table.refTables%}
+|{{ ref.name }}s|array| 见 [{{ref.name | camel}}](#{{ref.name | camel}}) |
+{% endfor %}
+
+{% for ref in table.refTables%}
+##### {{ ref.name | camel}}
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+{% for column in ref.columns %}
+{% if column.name not in ['{{ref.primaryKey}}', '{{table.name}}_id', 'created_at', 'updated_at', 'updated_by']%}
+|{{ column.name }}|{{ column.type|hive | lower }}| {{column.comment}}|
+{% endif %}
+{% endfor %}
+
+{% endfor %}
+

@@ -1,4 +1,5 @@
-<?php namespace App\Http\Controllers;
+<?php
+namespace App\Http\Controllers;
 
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
@@ -8,142 +9,15 @@ use App\Models\{{table.name | camel }};
 {% for column in table.foreignKeys %}
 use App\Models\{{column.referenceTable.name | camel }};
 {% endfor %}
+{% for ref in table.refTables%}
+use App\Models\{{ref.name | camel }};
+{% endfor %}
+
+use App\Http\Traits\{{table.name | camel }}Restable;
 
 use Redirect, Input;
 use Auth;
 
 class {{table.name | camel }}Controller extends Controller {
-
-	/**
-	 * Display a listing of the resource.
-	 *
-	 * @return Response
-	 */
-	public function index(Request $request)
-	{
-
-        $page_size = $request->query('page_size', 20);
-        $page_index = $request->query('page_index', 1);
-
-        {% for column in table.columns %}
-            {% if column.name not in ['id', 'created_at', 'updated_at', 'deleted_at'] %}
-        ${{column.name}} = $request->query('{{column.name}}');
-            {% endif %}
-        {% endfor %}
-
-        $query = {{table.name | camel }}::query()->with([{% for column in table.foreignKeys %}'{{ column.referenceTable.name }}', {% endfor %}]);
-
-        $totalQuery = {{table.name | camel }}::query();
-
-        {% for column in table.columns %}
-            {% if column.name not in ['id', 'created_at', 'updated_at', 'deleted_at'] %}
-        if(${{column.name}} != null){
-            $query->where('{{column.name}}', ${{column.name}});
-            $totalQuery->where('{{column.name}}', ${{column.name}});
-        }
-            {% endif %}
-        {% endfor %}
-        $total = $totalQuery->count();
-        $rows = $query->take($page_size)->offset(($page_index - 1) * $page_size)->get();
-        $result = ['rows' => $rows, 'total' => $total, 'page_index' => $page_index, 'page_size' => $page_size];
-        return $this->success($result);
-	}
-
-    /**
-	 * Show the form for creating a new resource.
-	 *
-	 * @return Response
-	 */
-	public function create()
-	{
-        return view('{{table.name | camel }}.create', [
-            {% for column in table.foreignKeys %}
-            '{{column.referenceTable.name | camel }}s' => {{column.referenceTable.name | camel }}::all(),
-            {% endfor %}
-        ]);
-	}
-
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @return Response
-     */
-    public function store(Request $request)
-    {
-        $params = $request->only([{% for column in table.columns %}'{{column.name}}', {% endfor %}]);
-        $params['updated_by'] = Auth::user()->name;
-        $entity = {{ table.name | camel}}::create($params);
-        if ($entity) {
-            return $this->success($entity);
-        } else {
-            return $this->failed();
-        }
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return Response
-     */
-    public function show($id)
-    {
-        $entity = {{table.name | camel }}::find($id);
-        return $this->success($entity);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return Response
-     */
-    public function edit($id)
-    {
-        return view('{{table.name | camel }}.edit', [
-            'data' => {{ table.name | camel }}::find($id),
-            {% for column in table.foreignKeys %}
-            '{{column.referenceTable.name | camel }}s' => {{column.referenceTable.name | camel }}::all(),
-            {% endfor %}
-            ]);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  int  $id
-     * @return Response
-     */
-    public function update($id, Request $request)
-    {
-        $params = $request->only([{% for column in table.columns %}'{{column.name}}', {% endfor %}]);
-        $params['updated_by'] = Auth::user()->name;
-        $result = {{ table.name | camel }}::where('id', $id)->update($params);
-        if ($result !== false) {
-            return $this->success($result);
-        } else {
-            return $this->failed($result);
-        }
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return Response
-     */
-	public function destroy($id)
-	{
-        $result = true;
-    {% for ft in table.foreignTables %}
-        $result &= {{ ft.name | camel }}::where('{{table.name}}_id', $id)->delete();
-    {% endfor %}
-        $result &= {{ table.name | camel }}::find($id)->delete();
-        if($result){
-            return $this->success();
-        }else{
-            return $this->failed();
-        }
-	}
+    use {{table.name | camel }}Restable;
 }

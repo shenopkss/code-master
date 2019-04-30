@@ -1,8 +1,7 @@
 <?php
 $factory->define('App\Models\{{table.name|camel}}', function ($faker) {
     return [
-        'id' => 10000,
-    {% for column in table.columns %}{% if column.name not in ['created_at', 'updated_at', 'deleted_at']%}
+    {% for column in table.columns %}{% if column.name not in [table.primaryKey, 'created_at', 'updated_at', 'deleted_at']%}
     '{{ column.name }}' => '{{ column | test_value}}',
         {% endif %}{% endfor %}
     ];

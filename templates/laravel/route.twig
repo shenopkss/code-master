@@ -1,0 +1,11 @@
+<?php
+Route::group(['prefix' => '{{ table.name }}s', 'middleware' => ['auth']], function()
+{
+    Route::get('/', '{{ table.name | camel }}Controller@index');
+    Route::post('/', '{{ table.name | camel }}Controller@store');
+    Route::get('/create', '{{ table.name | camel }}Controller@create');
+    Route::get('/{id}', '{{ table.name | camel }}Controller@show');
+    Route::get('/{id}/edit', '{{ table.name | camel }}Controller@edit');
+    Route::put('/{id}', '{{ table.name | camel }}Controller@update');
+    Route::delete('/{id}', '{{ table.name | camel }}Controller@destroy');
+});

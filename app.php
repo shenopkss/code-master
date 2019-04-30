@@ -2,7 +2,7 @@
 <?php
 require_once 'vendor/autoload.php';
 
-$dotenv = new Dotenv\Dotenv(__DIR__);
+$dotenv = Dotenv\Dotenv::create(__DIR__);
 $dotenv->load();
 
 require_once 'database.php';
@@ -12,7 +12,6 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 use League\Flysystem\Filesystem as Filesystem;
 use League\Flysystem\Adapter\Local;
 
-
 $filesystem = new Filesystem($adapter = new Local('./src'));
 $params = $argv[1];
 $twig = (object)null;
@@ -20,7 +19,7 @@ if(strpos($params, '.twig') === false){
     $twig = new \Twig_Environment(new \Twig_Loader_String());
 }else{
     $loader = new Twig_Loader_Filesystem('./templates');
-    $twig = new Twig_Environment($loader, ['debug' => true, 'cache' => false]);
+    $twig = new Twig_Environment($loader, ['cache' => false]);
 }
 
 $function = new Twig_SimpleFunction('render', function($template, $data, $file) use ($twig, $filesystem) {
@@ -38,7 +37,7 @@ $camelfilter = new Twig_SimpleFilter('camel', function ($string) {
     $result = '';
     $arr = explode('_', $string);
     foreach ($arr as $str) {
-        if(strlen($str) > 3){
+        if(strlen($str) > 2){
             $result .= strtoupper($str[0]) . substr($str, 1, strlen($str) - 1 );
         }else{
             $result .= strtoupper($str);
@@ -64,13 +63,14 @@ $hiveFilter = new Twig_SimpleFilter('hive', function ($string) {
     case 'YEAR':
         $type = 'STRING';
         break;
-    case 'TINYINT':
-        $type = 'TINYINT';
-        break;
+    // case 'TINYINT':
+        // $type = 'TINYINT';
+        // break;
     case 'SMALLINT':
         $type = 'SMALLINT';
         break;
     case 'MEDIUMINT':
+    case 'TINYINT':
     case 'INT':
     case 'TIMESTAMP':
         $type = 'INT';
@@ -148,13 +148,14 @@ foreach($tb_objs as $tb_obj){
         $table->columns[] = $column;
         $table->db = $db;
     }
-    $db->tables[] = $table;
-    $db->tablesMap[$table->name] = $table;
-}
-foreach($db->tables as $table){
+
     $pk = Capsule::select("select TABLE_NAME,COLUMN_NAME,CONSTRAINT_NAME, REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where CONSTRAINT_NAME like 'PRIMARY' and table_name = '" . $table->name . "' and TABLE_SCHEMA ='" . Capsule::connection()->getDatabaseName() . "' limit 1");
     $table->primaryKey = $pk[0]->COLUMN_NAME;
 
+    $db->tables[] = $table;
+    $db->tablesMap[$table->name] = $table;
+}
+foreach($db->tables as &$table){
     $fks = Capsule::select("select TABLE_NAME,COLUMN_NAME,CONSTRAINT_NAME, REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where CONSTRAINT_NAME like 'fk_%' and table_name = '" . $table->name . "' and TABLE_SCHEMA ='" . Capsule::connection()->getDatabaseName() . "'");
     foreach ($fks as $fk) {
         foreach ($table->columns as $column) {
@@ -175,6 +176,13 @@ foreach($db->tables as $table){
         if($isFk === false){
             $table->noForeignKeys[] = clone $column;
         }
+    }
+
+
+    $refs = Capsule::select("select TABLE_NAME,COLUMN_NAME,CONSTRAINT_NAME, REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where CONSTRAINT_NAME like 'fk_%' and REFERENCED_TABLE_NAME = '" . $table->name . "' and TABLE_SCHEMA ='" . Capsule::connection()->getDatabaseName() . "'");
+    $table->refTables = [];
+    foreach($refs as $ref){
+        $table->refTables[] = $db->tablesMap[$ref->TABLE_NAME];
     }
 }
 
