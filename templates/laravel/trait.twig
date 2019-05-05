@@ -71,11 +71,6 @@ trait {{table.name | camel }}Restable {
     {
         $params = $request->only([{% for column in table.columns %}'{{column.name}}', {% endfor %}]);
         $params['updated_by'] = Auth::user()->name;
-        {% for column in table.columns %}
-            {% if '(json)' in column.comment %}
-                $params['{{column.name}}'] = json_encode($params['{{column.name}}']);
-            {% endif%}
-        {% endfor %}
         $entity = {{ table.name | camel}}::create($params);
         if ($entity) {
             {% for ref in table.refTables%}
@@ -101,12 +96,8 @@ trait {{table.name | camel }}Restable {
      */
     public function show($id)
     {
-        $entity = {{table.name | camel }}::find($id);
-        {% for column in table.columns %}
-            {% if '(json)' in column.comment %}
-            $entity->{{column.name}} = json_decode($entity->{{column.name}}, true);
-            {% endif%}
-        {% endfor %}
+    $entity = {{table.name | camel }}::{% if table.foreignKeys | length > 0 and table.refTables | length > 1 %}with([{% for ref in table.refTables%}'{{ref.name}}s', {% endfor %}])->{% endif %}find($id);
+
         return $this->success($entity);
     }
 
@@ -136,12 +127,7 @@ trait {{table.name | camel }}Restable {
     {
         $params = $request->only([{% for column in table.columns %}'{{column.name}}', {% endfor %}]);
         $params['updated_by'] = Auth::user()->name;
-        {% for column in table.columns %}
-            {% if '(json)' in column.comment %}
-                $params['{{column.name}}'] = json_encode($params['{{column.name}}']);
-            {% endif%}
-        {% endfor %}
-        $result = {{ table.name | camel }}::where('{{table.primaryKey}}', $id)->update($params);
+        $result = {{ table.name | camel }}::find($id)->update($params);
         if ($result !== false) {
             {% for ref in table.refTables%}
                 ${{ref.name}}s = $request->input('{{ref.name}}s');
