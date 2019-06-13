@@ -3,6 +3,7 @@
 {{ render('laravel/route.twig', data, "#{db.name}/route/#{table.name|camel}.php")}}
 {{ render('laravel/controller.twig', data, "#{db.name}/controller/#{table.name|camel}Controller.php")}}
 {{ render('laravel/trait.twig', data, "#{db.name}/trait/#{table.name|camel}Restable.php")}}
+{{ render('laravel/observer.twig', data, "#{db.name}/observer/#{table.name|camel}Observer.php")}}
 {{ render('laravel/model.twig', data, "#{db.name}/model/#{table.name|camel}.php")}}
 {{ render('laravel/test.twig', data, "#{db.name}/test/#{table.name|camel}Test.php")}}
 {{ render('laravel/factory.twig', data, "#{db.name}/factory/#{table.name|camel}Factory.php")}}

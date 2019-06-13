@@ -34,15 +34,20 @@ trait {{table.name | camel }}Restable {
             {% endif %}
         {% endfor %}
 
-        $query = {{table.name | camel }}::query()->with([{% for column in table.foreignKeys %}'{{ column.referenceTable.name }}', {% endfor %}]);
+        $query = {{table.name | camel }}::query(){% if table.foreignKeys | length > 0 %}->with([{% for column in table.foreignKeys %}'{{ column.referenceTable.name }}', {% endfor %}]){% endif %};
 
         {% for column in table.columns %}
             {% if column.name not in ['id', 'created_at', 'updated_at', 'deleted_at'] %}
             if(${{column.name}} != null){
+                {% if column.type | hive == 'STRING' %}
+                $query->where('{{column.name}}', 'like', '%'  .  ${{column.name}}  .  '%');
+                {% else %}
                 $query->where('{{column.name}}', ${{column.name}});
+                {% endif %}
             }
             {% endif %}
         {% endfor %}
+        $query->orderBy('{{table.primaryKey}}', 'desc');
         $result = $query->paginate($per_page, ["*"], 'page', $page);
         return $this->success($result);
 	}
@@ -96,8 +101,7 @@ trait {{table.name | camel }}Restable {
      */
     public function show($id)
     {
-    $entity = {{table.name | camel }}::{% if table.foreignKeys | length > 0 and table.refTables | length > 1 %}with([{% for ref in table.refTables%}'{{ref.name}}s', {% endfor %}])->{% endif %}find($id);
-
+        $entity = {{table.name | camel }}::{% if table.foreignKeys | length > 0 and table.refTables | length > 1 %}with([{% for column in table.foreignKeys %}'{{ column.referenceTable.name }}', {% endfor %}{% for ref in table.refTables%}'{{ref.name}}s', {% endfor %}])->{% endif %}find($id);
         return $this->success($entity);
     }
 

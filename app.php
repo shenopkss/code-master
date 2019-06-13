@@ -150,7 +150,7 @@ foreach($tb_objs as $tb_obj){
     }
 
     $pk = Capsule::select("select TABLE_NAME,COLUMN_NAME,CONSTRAINT_NAME, REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where CONSTRAINT_NAME like 'PRIMARY' and table_name = '" . $table->name . "' and TABLE_SCHEMA ='" . Capsule::connection()->getDatabaseName() . "' limit 1");
-    $table->primaryKey = $pk[0]->COLUMN_NAME;
+    $table->primaryKey = count($pk) > 0 ? $pk[0]->COLUMN_NAME : 'id';
 
     $db->tables[] = $table;
     $db->tablesMap[$table->name] = $table;

@@ -3,3 +3,4 @@ vendor/
 .DS_Store
 .env
 composer.lock
+.php_cs.cache
