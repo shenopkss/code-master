@@ -11,7 +11,6 @@
 git clone https://github.com/shenopkss/code-master ~/.code-master
 cd ~/.code-master
 composer install
-ln -s ~/.code-master/app.php /usr/local/bin/code
 ```
 # 配置
 ```bash
@@ -27,14 +26,9 @@ DB_PASSWORD=
 
 # 使用
 ## CLI
-```bash
-code '{% for column in db.tables[0].columns %}
-{{column.name}}
-{% endfor %}
-'
 ```
 ```bash
-code phalcon/start.twig
+php app.php laravel/start.twig
 ```
 
 ## Vim Plugin

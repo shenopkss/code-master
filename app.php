@@ -2,7 +2,14 @@
 <?php
 require_once 'vendor/autoload.php';
 
-$dotenv = Dotenv\Dotenv::create(__DIR__);
+$params = $argv[1];
+if(isset($argv[2])){
+    $env = $argv[2];
+}else{
+    $env = '.env';
+}
+
+$dotenv = Dotenv\Dotenv::create(__DIR__, $env );
 $dotenv->load();
 
 require_once 'database.php';
@@ -13,7 +20,6 @@ use League\Flysystem\Filesystem as Filesystem;
 use League\Flysystem\Adapter\Local;
 
 $filesystem = new Filesystem($adapter = new Local('./src'));
-$params = $argv[1];
 $twig = (object)null;
 if(strpos($params, '.twig') === false){
     $twig = new \Twig_Environment(new \Twig_Loader_String());
@@ -131,7 +137,15 @@ $dbName = Capsule::connection()->getDatabaseName();
 $db = new DB($dbName);
 $query = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '" . Capsule::connection()->getDatabaseName() . "'";
 $tb_objs = Capsule::select($query);
+
+$tables = getenv('TABLES', '*');
 foreach($tb_objs as $tb_obj){
+    if($tables != '*'){
+        $target = explode(',', $tables);
+        if(!in_array($tb_obj->TABLE_NAME, $target)){
+            continue;
+        }
+    }
     $table = new Table($tb_obj);
     $columns = Capsule::select("select COLUMN_NAME,DATA_TYPE,CHARACTER_MAXIMUM_LENGTH,COLUMN_COMMENT from information_schema.COLUMNS where table_name = '" . $table->name . "' and TABLE_SCHEMA = '" . $dbName . "'");
     foreach ($columns  as $column_obj) {

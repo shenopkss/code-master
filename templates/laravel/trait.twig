@@ -25,19 +25,24 @@ trait {{table.name | camel }}Restable {
 	 */
 	public function index(Request $request)
 	{
-        $page = intval($request->query('page', 1));
-        $per_page = intval($request->query('per_page', 20));
+        $page = intval($request->query('page'));
+        $per_page = intval($request->query('per_page'));
 
+        $id = $request->query('id');
         {% for column in table.columns %}
-            {% if column.name not in ['id', 'created_at', 'updated_at', 'deleted_at'] %}
+            {% if column.name not in ['created_at', 'updated_at', 'deleted_at'] %}
         ${{column.name}} = $request->query('{{column.name}}');
             {% endif %}
         {% endfor %}
 
         $query = {{table.name | camel }}::query(){% if table.foreignKeys | length > 0 %}->with([{% for column in table.foreignKeys %}'{{ column.referenceTable.name }}', {% endfor %}]){% endif %};
 
+        if($id != null){
+            $query->where('id', $id);
+        }
+
         {% for column in table.columns %}
-            {% if column.name not in ['id', 'created_at', 'updated_at', 'deleted_at'] %}
+            {% if column.name not in ['created_at', 'updated_at', 'deleted_at'] %}
             if(${{column.name}} != null){
                 {% if column.type | hive == 'STRING' %}
                 $query->where('{{column.name}}', 'like', '%'  .  ${{column.name}}  .  '%');
@@ -48,7 +53,16 @@ trait {{table.name | camel }}Restable {
             {% endif %}
         {% endfor %}
         $query->orderBy('{{table.primaryKey}}', 'desc');
-        $result = $query->paginate($per_page, ["*"], 'page', $page);
+        if($per_page){
+            $result = $query->paginate($per_page, ["*"], 'page', $page);
+        }else{
+            $data = $query->get();
+            $result = [
+            "current_page" => 1,
+            "total" => count($data),
+            'data' => $data
+            ];
+        }
         return $this->success($result);
 	}
 

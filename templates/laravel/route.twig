@@ -4,13 +4,13 @@ Route::group(['middleware' => ['auth']], function () {
 
 Route::group(['prefix' => '{{ table.name }}s', 'middleware' => ['permission:{{table.name}}']], function()
 {
-    Route::get('/', '{{ table.name | camel }}Controller@index');
-    Route::post('/', '{{ table.name | camel }}Controller@store');
-    Route::get('/create', '{{ table.name | camel }}Controller@create');
-    Route::get('/{id}', '{{ table.name | camel }}Controller@show');
-    Route::get('/{id}/edit', '{{ table.name | camel }}Controller@edit');
-    Route::put('/{id}', '{{ table.name | camel }}Controller@update');
-    Route::delete('/{id}', '{{ table.name | camel }}Controller@destroy');
+    Route::get('/', 'Api\{{ table.name | camel }}Controller@index');
+    Route::post('/', 'Api\{{ table.name | camel }}Controller@store');
+    Route::get('/create', 'Api\{{ table.name | camel }}Controller@create');
+    Route::get('/{id}', 'Api\{{ table.name | camel }}Controller@show');
+    Route::get('/{id}/edit', 'Api\{{ table.name | camel }}Controller@edit');
+    Route::put('/{id}', 'Api\{{ table.name | camel }}Controller@update');
+    Route::delete('/{id}', 'Api\{{ table.name | camel }}Controller@destroy');
 });
 {% endfor %}
 
