@@ -25,8 +25,6 @@ DB_PASSWORD=
 ```
 
 # 使用
-## CLI
-```
 ```bash
 php app.php laravel/start.twig
 ```
