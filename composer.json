@@ -4,6 +4,7 @@
         "twig/twig": "^2.8",
         "league/flysystem": "^1.0",
         "illuminate/database": "^5.8",
-        "illuminate/events": "^5.8"
+        "illuminate/events": "^5.8",
+        "doctrine/dbal": "^2.10"
     }
 }

@@ -8,15 +8,15 @@ GET /api/{{table.name}}s
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
-|page| int | 是 | 请求分页页码|
-|per_page| int| 是 | 请求分页条数|
+|page| int | 否 | 请求分页页码|
+|per_page| int| 否 | 请求分页条数|
 
 ##### 搜索参数
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 {% for column in table.columns %}
 {% if column.name not in ['created_at', 'updated_at']%}
-|{{ column.name }}|{{ column.type|hive | lower }}| 是 | {{column.comment}}|
+|{{ column.name }}|{{ column.type|hive | lower }}| 否 | {{column.comment}}|
 {% endif %}
 {% endfor %}
 
@@ -24,7 +24,7 @@ GET /api/{{table.name}}s
 ##### 返回参数
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| ret | int | 状态码，0表示成功，大于0表示失败|
+| code | int | 状态码，0表示成功，大于0表示失败|
 | msg| string| 返回相关错误信息( ret=0时无 )，只可作提示用，不得用作成功/失败判断依据 |
 | data | array | 见[Paginate](#Paginate) |
 
@@ -41,6 +41,7 @@ GET /api/{{table.name}}s
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
+|{{table.primaryKey}}|int|主键ID|
 {% for column in table.columns %}
 |{{ column.name }}|{{ column.type|hive | lower }}| {{column.comment}}|
 {% endfor %}
@@ -54,9 +55,8 @@ GET /api/{{table.name}}s
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 {% for column in ref.columns %}
-{% if column.name not in ['{{ref.primaryKey}}', '{{table.name}}_id', 'created_at', 'updated_at', 'updated_by']%}
+| {{ref.primaryKey}} | int| 主键ID |
 |{{ column.name }}|{{ column.type|hive | lower }}| {{column.comment}}|
-{% endif %}
 {% endfor %}
 
 {% endfor %}

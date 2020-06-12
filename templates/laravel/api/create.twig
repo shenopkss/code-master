@@ -21,7 +21,7 @@ POST /api/{{table.name}}s
 ##### 返回参数
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| ret | int | 状态码，0表示成功，大于0表示失败|
+| code | int | 状态码，0表示成功，大于0表示失败|
 | msg| string| 返回相关错误信息( ret=0时无 )，只可作提示用，不得用作成功/失败判断依据 |
 | data | array | 见 [{{table.name | camel}}](#{{table.name | camel}})  |
 

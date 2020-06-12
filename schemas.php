@@ -1,18 +1,21 @@
 <?php
 
-class DB{
+class DB
+{
     public $name;
     public $tables = [];
     public $tablesMap = [];
     public $commands = [];
     public $views = [];
 
-    function __construct($name){
+    function __construct($name)
+    {
         $this->name = $name;
     }
 }
 
-class Table{
+class Table
+{
     public $name;
     public $db;
     public $primaryKey = [];
@@ -20,15 +23,27 @@ class Table{
     public $foreignKeys = [];
     public $noForeignKeys = [];
 
-    function __construct($obj){
-        $this->name = $obj->TABLE_NAME;
+    function __construct($obj)
+    {
+        $name = $obj->TABLE_NAME;
+        // if ($name[-1] == 's') {
+        //     $name = substr($name, 0, strlen($name) - 1);
+        // }else if ($name[-1] == 'es') {
+        //     $name = substr($name, 0, strlen($name) - 2);
+        // }
+        $this->name = $name;
     }
 }
 
-class Command{}
-class View{}
+class Command
+{
+}
+class View
+{
+}
 
-class Column{
+class Column
+{
     public $table;
     public $referenceTable;
     public $name;

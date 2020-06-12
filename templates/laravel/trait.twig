@@ -25,8 +25,8 @@ trait {{table.name | camel }}Restable {
 	 */
 	public function index(Request $request)
 	{
-        $page = intval($request->query('page'));
-        $per_page = intval($request->query('per_page'));
+        //$page = intval($request->query('page'));
+        $per_page = intval($request->query('per_page', 20));
 
         $id = $request->query('id');
         {% for column in table.columns %}
@@ -53,16 +53,7 @@ trait {{table.name | camel }}Restable {
             {% endif %}
         {% endfor %}
         $query->orderBy('{{table.primaryKey}}', 'desc');
-        if($per_page){
-            $result = $query->paginate($per_page, ["*"], 'page', $page);
-        }else{
-            $data = $query->get();
-            $result = [
-            "current_page" => 1,
-            "total" => count($data),
-            'data' => $data
-            ];
-        }
+        $result = $query->paginate($per_page);
         return $this->success($result);
 	}
 
