@@ -50,6 +50,7 @@ class Column
     public $comment;
     public $NonNull;
     public $type;
+    public $subtype;
     public $isUnique;
     public $precision;
     public $scale;

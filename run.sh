@@ -1,5 +1,5 @@
 #!/bin/bash
-database='moshen_zq'
+database='honghu'
 
 if [[ -d src/$database ]]; then
   rm -rf src/$database
@@ -7,26 +7,21 @@ else
   mkdir src/$database
 fi
 
-php app.php laravel/start.twig $database
-php-cs-fixer fix src/$database --rules=@Symfony
-
-# models=('User' 'App' 'Platform' 'Operator' 'Project' 'ProjectType' 'AppVersion' 'AppVersionProduct' 'AppVersionPayment' 'AppSdkConfig' 'PayChannel' 'PayType' 'PaySubject' 'SdkSwitch' 'SdkSwitchTemplate' 'TestAccount' 'ProjectPermission' 'Protocol')
-# models=('Operator' 'Project' 'AppVersion' 'AppSdkConfig' 'PayChannel' 'SdkSwitch' 'SdkSwitchTemplate')
-# models=('App')
-
-# models=('App' 'AppPackBatch' 'AppSubPackage' 'AppVersion' 'User')
-# models=('AppVersion')
-# project_name=package-api
-# project_dir=/Users/shan/Projects/kingnet/${project_name}
+php app.php kotlin/start.twig $database
 
 
-# for model in ${models[@]};
-# do
-    # cp src/${database}/model/${model}.php ${project_dir}/app/Models/.
-    # cp src/${database}/controller/${model}Controller.php ${project_dir}/app/Http/Controllers/.
-    # cp src/${database}/trait/${model}Restable.php ${project_dir}/app/Http/Traits/.
-    # cp src/${database}/observer/${model}Observer.php ${project_dir}/app/Observers/.
-    # cp src/${database}/test/${model}Test.php ${project_dir}/tests/.
-    # cp src/${database}/factory/${model}Factory.php ${project_dir}/database/factories/.
-    # cp src/passport_app/route/${model}.php ${project_dir}/app/Http/Routes/.
-# done
+models=('Teacher' 'Org' 'CourseChapter' 'CourseSchedule' 'CourseLesson' 'CourseComment' 'UserCourse' 'Course' 'Order' 'CourseCategory' 'OrderLine')
+
+for model in ${models[@]};
+do
+# cp src/honghu/ext/model/*.kt /Users/shan/Projects/honghu/api/src/main/kotlin/com/honghu/api/ext/model/.
+cp src/honghu/handler/admin/${model}Handler.kt /Users/shan/Projects/honghu/api/src/main/kotlin/com/honghu/api/handler/admin/.
+cp src/honghu/model/${model}.kt /Users/shan/Projects/honghu/api/src/main/kotlin/com/honghu/api/model/.
+cp src/honghu/test/admin/Test${model}.kt /Users/shan/Projects/honghu/api/src/test/kotlin/com/honghu/api/admin/
+cp src/honghu/js/service/${model}.js /Users/shan/Projects/honghu/admin/src/services/.
+cp src/honghu/js/model/${model}.js /Users/shan/Projects/honghu/admin/src/models/.
+done
+cp src/honghu/route/admin.kt /Users/shan/Projects/honghu/api/src/main/kotlin/com/honghu/api/route/.
+
+# cp -r src/honghu/js/page/Order /Users/shan/Projects/honghu/admin/src/pages/.
+# cp -r src/honghu/js/page/User /Users/shan/Projects/honghu/admin/src/pages/.

@@ -1,0 +1,15 @@
+{% for table in db.tables %}
+{# {{ render('kotlin/model.ext.twig', {'table':table}, "#{db.name}/ext/model/#{table.name}.kt")}} #}
+{{ render('kotlin/handler.twig', {'table':table}, "#{db.name}/handler/admin/#{table.name}Handler.kt")}}
+{{ render('kotlin/model.twig', {'table':table}, "#{db.name}/model/#{table.name}.kt")}}
+{{ render('kotlin/test.twig', {'table':table}, "#{db.name}/test/admin/Test#{table.name}.kt")}}
+
+{{ render('kotlin/js/service.twig', {'table':table}, "#{db.name}/js/service/#{table.name | camel }.js")}}
+{{ render('kotlin/js/model.twig', {'table':table}, "#{db.name}/js/model/#{table.name | camel }.js")}}
+
+{{ render('kotlin/js/page/index.twig', {'table':table}, "#{db.name}/js/page/#{table.name | camel }/index.jsx")}}
+{{ render('kotlin/js/page/create.twig', {'table':table}, "#{db.name}/js/page/#{table.name | camel }/create/index.jsx")}}
+{{ render('kotlin/js/page/update.twig', {'table':table}, "#{db.name}/js/page/#{table.name | camel }/update/index.jsx")}}
+
+{% endfor %}
+{{ render('kotlin/route.twig', {'db':db}, "#{db.name}/route/admin.kt")}}

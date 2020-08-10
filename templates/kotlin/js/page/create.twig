@@ -1,0 +1,143 @@
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { Button, Card, DatePicker, Input, Form, InputNumber, Radio, Select, Tooltip, Checkbox, Upload, Icon } from 'antd';
+import {
+  PlusOutlined
+} from '@ant-design/icons';
+import ImgCrop from 'antd-img-crop';
+import { getUploadToken } from '@/services/util'
+import 'antd/es/modal/style';
+import 'antd/es/slider/style';
+import 'braft-editor/dist/index.css'
+
+
+const CheckboxGroup = Checkbox.Group;
+
+import { connect, FormattedMessage, formatMessage } from 'umi';
+import React, { useEffect, useState } from 'react';
+import { PageHeaderWrapper } from '@ant-design/pro-layout';
+import styles from './style.less';
+
+import Editor from '@/components/Editor'
+import CloudUpload from '@/components/CloudUpload'
+import { create } from '@/services/{{table.name}}'
+
+
+const FormItem = Form.Item;
+const { Option } = Select;
+const { RangePicker } = DatePicker;
+const { TextArea } = Input;
+
+const Create = props => {
+  const { submitting } = props;
+
+  const [form] = Form.useForm();
+
+  useEffect(() => {
+    const { dispatch } = props;
+  }, []);
+
+  const onFinish = values => {
+    console.log('onFinish', values)
+
+    const { dispatch } = props;
+
+    dispatch({
+      type: '{{table.name}}/create',
+      payload: values,
+      callback: () => {
+        form.resetFields()
+      }
+    });
+  };
+
+  const onFinishFailed = errorInfo => {
+    // eslint-disable-next-line no-console
+    console.log('Failed:', errorInfo);
+  };
+
+  const onValuesChange = changedValues => {
+    console.log('onValuesChange', changedValues)
+  };
+
+  const formItemLayout = {
+    labelCol: {
+      xs: {
+        span: 24,
+      },
+      sm: {
+        span: 7,
+      },
+    },
+    wrapperCol: {
+      xs: {
+        span: 24,
+      },
+      sm: {
+        span: 12,
+      },
+      md: {
+        span: 10,
+      },
+    },
+  };
+  const submitFormLayout = {
+    wrapperCol: {
+      xs: {
+        span: 24,
+        offset: 0,
+      },
+      sm: {
+        span: 10,
+        offset: 7,
+      },
+    },
+  };
+
+  return (
+    <PageHeaderWrapper content="">
+      <Card bordered={false}>
+        <Form
+          hideRequiredMark
+          form={form}
+          name="basic"
+          onFinish={onFinish}
+          onFinishFailed={onFinishFailed}
+          onValuesChange={onValuesChange}
+        >
+{% for index,column in table.columns %}
+{% if column.name not in [table.primaryKey, 'created_at', 'updated_at', 'deleted_at']%}
+          <FormItem
+            {...formItemLayout}
+            label="{{column.comment}}"
+            name="{{column.name}}"
+            rules={[
+              {
+                required: true,
+                message: '必填项',
+              },
+            ]}
+          >
+{% if column.type in ['Int', 'Long', 'Float', 'Double']%}
+            <InputNumber placeholder="" />
+{% else %}
+            <Input placeholder="" />
+{% endif %}
+          </FormItem>
+{% endif %}
+{% endfor %}
+          <FormItem
+            {...submitFormLayout}
+          >
+            <Button type="primary" htmlType="submit" loading={submitting}>
+              提交
+            </Button>
+          </FormItem>
+        </Form>
+      </Card>
+    </PageHeaderWrapper>
+  );
+};
+
+export default connect(({ loading }) => ({
+  submitting: loading.effects['{{table.name}}/create'],
+}))(Create);

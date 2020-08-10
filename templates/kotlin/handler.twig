@@ -1,0 +1,93 @@
+package com.honghu.api.handler.admin
+
+import com.honghu.api.ext.error
+import com.honghu.api.ext.mongo.find
+import com.honghu.api.ext.mongo.get
+import com.honghu.api.ext.success
+import com.honghu.api.model.*
+import com.honghu.api.provider.db
+import io.vertx.core.json.JsonArray
+import io.vertx.core.json.JsonObject
+import io.vertx.ext.mongo.FindOptions
+import io.vertx.ext.web.RoutingContext
+import com.honghu.api.enum.*
+import com.honghu.api.ext.mongo.*
+import io.vertx.kotlin.core.json.json
+import io.vertx.kotlin.core.json.obj
+
+object {{table.name}}Handler {
+  suspend fun create(ctx: RoutingContext) {
+    val params = ctx.bodyAsJson
+    val {{table.name | lcamel}} = {{table.name}}()
+{% for column in table.columns %}
+    if(params.containsKey("{{ column.name }}")){
+{% if column.name not in [table.primaryKey, 'created_at', 'updated_at', 'deleted_at']%}
+{% if column.type == 'List' %}
+      {{table.name | lcamel}}.{{ column.name }} = params.getJsonArray("{{ column.name }}").map { it.to{{column.subtype}}() }
+{% elseif column.type == 'Enum' %}
+      {{table.name | lcamel}}.{{ column.name }} = {{column.subtype}}.valueOf(params.getString("{{ column.name }}")) 
+{% else %}
+      {{table.name | lcamel}}.{{ column.name }} = params.get{{column | json_type}}("{{ column.name }}")
+{% endif %}
+{% endif %}
+    }
+{% endfor %}
+   
+    {{table.name | lcamel}}.save()
+    ctx.response().success({{table.name | lcamel}}.id)
+  }
+
+  suspend fun update(ctx: RoutingContext) {
+    val id = ctx.request().getParam("id");
+    val params = ctx.bodyAsJson
+    val query = json { obj("_id" to id) }
+    db.update<{{table.name}}>(query, json{ obj("\$set" to params)})
+
+    return ctx.response().success()
+  }
+
+  suspend fun query(ctx: RoutingContext) {
+    val request = ctx.request()
+    var pageSize = request.getParam("pageSize")
+    var current = request.getParam("current")
+    var opstion = FindOptions()
+    if (pageSize != null) {
+      opstion.limit = pageSize.toInt()
+    }
+    if (current != null) {
+      opstion.skip = pageSize.toInt() * (current.toInt() - 1)
+    }
+    var query = JsonObject()
+
+{% for column in table.columns %}
+{% if column.name not in [table.primaryKey, 'created_at', 'updated_at', 'deleted_at']%}
+    var {{ column.name }} = request.getParam("{{ column.name }}")
+    if ({{ column.name }} != null) {
+        query.put("{{ column.name}}", {{column.name}})
+    }
+{% endif %}
+{% endfor %}
+
+    var data = db.find<{{table.name}}>(query, opstion)
+    var count = db.count<{{table.name}}>(query)
+    val result = json{ obj ("data" to data, "total" to count, "current" to current)}
+    return ctx.response().success(result)
+  }
+
+  suspend fun delete(ctx: RoutingContext) {
+    val id = ctx.request().getParam("id");
+    var {{table.name | lcamel}} = db.get<{{table.name}}>(id)
+    if ({{table.name | lcamel}} == null) {
+      return ctx.response().error("无效的{{table.name}} ID")
+    }
+    {{table.name | lcamel}}.delete()
+    return ctx.response().success()
+  }
+
+  suspend fun get(ctx: RoutingContext) {
+    val id = ctx.request().getParam("id");
+    var {{table.name | lcamel}} = db.get<{{table.name}}>(id)
+    return ctx.response().success({{table.name | lcamel}})
+  }
+
+}

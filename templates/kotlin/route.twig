@@ -1,0 +1,16 @@
+package com.honghu.api.route
+
+import io.vertx.ext.web.Router
+import com.honghu.api.handler.admin.*
+import com.honghu.api.ext.coroutineHandler
+
+fun registerAdminRoute(router: Router){
+{% for table in db.tables %}
+router.post("/admin/{{table.name | underscore}}").coroutineHandler { {{table.name}}Handler.create(it) }
+router.put("/admin/{{table.name | underscore}}/:id").coroutineHandler { {{table.name}}Handler.update(it) }
+router.get("/admin/{{table.name | underscore}}").coroutineHandler { {{table.name}}Handler.query(it) }
+router.get("/admin/{{table.name | underscore}}/:id").coroutineHandler { {{table.name}}Handler.get(it) }
+router.delete("/admin/{{table.name | underscore}}/:id").coroutineHandler { {{table.name}}Handler.delete(it) }
+
+{% endfor %}
+}

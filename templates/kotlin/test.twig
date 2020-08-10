@@ -1,0 +1,147 @@
+package com.honghu.api.admin
+
+import com.honghu.api.MainVerticle
+import com.honghu.api.ext.mongo.get
+import com.honghu.api.provider.db
+import io.vertx.core.Vertx
+import io.vertx.core.json.JsonObject
+import io.vertx.ext.web.client.WebClient
+import io.vertx.junit5.VertxExtension
+import io.vertx.junit5.VertxTestContext
+import io.vertx.kotlin.coroutines.dispatcher
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import com.honghu.api.enum.*
+import com.honghu.api.model.*
+
+
+@ExtendWith(VertxExtension::class)
+class Test{{table.name}} {
+
+  @BeforeEach
+  fun deploy_verticle(vertx: Vertx, testContext: VertxTestContext) {
+    vertx.deployVerticle(MainVerticle(), testContext.succeeding<String> { _ -> testContext.completeNow() })
+  }
+
+  @Test
+  fun create(vertx: Vertx, testContext: VertxTestContext) {
+    var {{table.name | lcamel}} = {{table.name}}()
+    val json = JsonObject.mapFrom({{table.name | lcamel}})
+
+    var client = WebClient.create(vertx)
+    client.post(8888, "localhost", "/admin/{{table.name | underscore}}").sendJsonObject(json) { ar ->
+      if (ar.succeeded()) {
+        var res = ar.result().bodyAsJsonObject()
+        println("create $res")
+        assertEquals(res.getInteger("code"), 0)
+        testContext.completeNow()
+      }
+    }
+  }
+
+  @Test
+  fun update(vertx: Vertx, testContext: VertxTestContext) {
+    var {{table.name | lcamel}} = {{table.name}}()
+    GlobalScope.launch(vertx.dispatcher()) {
+      {{table.name | lcamel}}.save()
+      val id = {{table.name | lcamel}}.id
+
+{% for index, column in table.columns %}
+{% if column.name not in [table.primaryKey, 'created_at', 'updated_at', 'deleted_at']%}
+{% if column.type == 'String' %}
+      {{table.name | lcamel}}.{{column.name}} = {{column | test_value | raw}} + 1
+{% endif %}
+{% endif %}
+{% endfor %}
+      val json = JsonObject.mapFrom({{table.name | lcamel}})
+      json.remove("_id")
+
+      var client = WebClient.create(vertx)
+      client.put(8888, "localhost", "/admin/{{table.name | underscore}}/$id").sendJsonObject(json) { ar ->
+        if (ar.succeeded()) {
+          var res = ar.result().bodyAsJsonObject()
+          println("update $res")
+          assertEquals(res.getInteger("code"), 0)
+          GlobalScope.launch(vertx.dispatcher()) {
+            val tartget = db.get<{{table.name}}>(id!!)
+            
+{% for index, column in table.columns %}
+{% if column.name not in [table.primaryKey, 'created_at', 'updated_at', 'deleted_at']%}
+{% if column.type == 'String' %}
+            assertEquals(tartget!!.{{column.name}}, {{table.name | lcamel}}.{{column.name}})
+{% endif %}
+{% endif %}
+{% endfor %}
+            testContext.completeNow()
+          }
+        }
+      }
+    }
+  }
+
+  @Test
+  fun get(vertx: Vertx, testContext: VertxTestContext) {
+    var {{table.name | lcamel}} = {{table.name}}()
+    GlobalScope.launch(vertx.dispatcher()) {
+      {{table.name | lcamel}}.save()
+      val id = {{table.name | lcamel}}.id
+
+      var client = WebClient.create(vertx)
+      client.get(8888, "localhost", "/admin/{{table.name | underscore}}/$id").send { ar ->
+        if (ar.succeeded()) {
+          var res = ar.result().bodyAsJsonObject()
+          println("get $res")
+          assertEquals(res.getInteger("code"), 0)
+          testContext.completeNow()
+        }
+      }
+    }
+  }
+
+  @Test
+  fun query(vertx: Vertx, testContext: VertxTestContext) {
+    var {{table.name | lcamel}} = {{table.name}}()
+    GlobalScope.launch(vertx.dispatcher()) {
+      {{table.name | lcamel}}.save()
+      val id = {{table.name | lcamel}}.id
+
+      var client = WebClient.create(vertx)
+      client.get(8888, "localhost", "/admin/{{table.name | underscore}}").send { ar ->
+        if (ar.succeeded()) {
+          var res = ar.result().bodyAsJsonObject()
+          println("query $res")
+          assertEquals(res.getInteger("code"), 0)
+          testContext.completeNow()
+        }
+      }
+    }
+  }
+
+  @Test
+  fun delete(vertx: Vertx, testContext: VertxTestContext) {
+    var {{table.name | lcamel}} = {{table.name}}()
+    GlobalScope.launch(vertx.dispatcher()) {
+      {{table.name | lcamel}}.save()
+      val id = {{table.name | lcamel}}.id
+
+      var client = WebClient.create(vertx)
+      client.delete(8888, "localhost", "/admin/{{table.name | underscore}}/$id").send { ar3 ->
+        if (ar3.succeeded()) {
+          val res = ar3.result().bodyAsJsonObject()
+          println("delete $res")
+          assertEquals(res.getInteger("code"), 0)
+          GlobalScope.launch(vertx.dispatcher()) {
+            val model = db.get<{{table.name}}>(id!!)
+            assertNull(model)
+            testContext.completeNow()
+          }
+        }
+      }
+    }
+  }
+}

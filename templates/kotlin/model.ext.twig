@@ -1,0 +1,46 @@
+package com.honghu.api.ext.model
+
+import com.honghu.api.model.{{table.name}}
+import com.honghu.api.provider.DBProvider
+import io.vertx.core.json.JsonObject
+import io.vertx.ext.mongo.FindOptions
+import io.vertx.ext.mongo.MongoClientDeleteResult
+import io.vertx.ext.mongo.MongoClientUpdateResult
+import io.vertx.kotlin.core.json.json
+import io.vertx.kotlin.core.json.obj
+import io.vertx.kotlin.ext.mongo.findOptionsOf
+
+suspend fun {{table.name}}.save(): String? {
+  val id = DBProvider.save<{{table.name}}>(this)
+  if (id != null) {
+    this.id = id
+  }
+  return this.id
+}
+
+suspend fun {{table.name}}.delete(): MongoClientDeleteResult? {
+  return DBProvider.delete<{{table.name}}>(json { obj("_id" to id) })
+}
+
+suspend fun {{table.name}}.Companion.get(id: String): {{table.name}}? {
+  return DBProvider.findOne<{{table.name}}>(json { obj("_id" to id) })
+}
+
+suspend fun {{table.name}}.Companion.find(
+  query: JsonObject,
+  findOptions: FindOptions = findOptionsOf()
+): List<{{table.name}}>? {
+  return DBProvider.find<{{table.name}}>(query, findOptions)
+}
+
+suspend fun {{table.name}}.Companion.findOne(
+  query: JsonObject,
+  findOptions: FindOptions = findOptionsOf()
+): {{table.name}}? {
+  return DBProvider.findOne<{{table.name}}>(query)
+}
+
+
+suspend fun {{table.name}}.Companion.update(query: JsonObject, update: JsonObject): MongoClientUpdateResult? {
+  return DBProvider.update<{{table.name}}>(query, update)
+}

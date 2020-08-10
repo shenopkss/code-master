@@ -57,6 +57,27 @@ $camelfilter = new Twig_SimpleFilter('camel', function ($string) {
     return $result;
 });
 $twig->addFilter($camelfilter);
+
+$lcamelfilter = new Twig_SimpleFilter('lcamel', function ($string) {
+    $result = '';
+    $arr = explode('_', $string);
+    foreach ($arr as $index=>$str) {
+        if($index ==0){
+            $result .= strtolower($str);
+            continue;
+        }
+        if (strlen($str) > 2) {
+            $result .= strtoupper($str[0]) . substr($str, 1, strlen($str) - 1);
+        } else {
+            $result .= strtoupper($str);
+        }
+    }
+
+    return $result;
+});
+
+$twig->addFilter($lcamelfilter);
+
 $hiveFilter = new Twig_SimpleFilter('hive', function ($string) {
     $type = '';
     switch (strtoupper($string)) {
@@ -66,7 +87,7 @@ $hiveFilter = new Twig_SimpleFilter('hive', function ($string) {
         case 'TEXT':
         case 'MEDIUMTEXT':
         case 'LONGTEXT':
-            // case 'ENUM':
+            // case 'Enum':
             // case 'DATETIME':
             // case 'TIME':
             // case 'YEAR':
@@ -104,37 +125,66 @@ $twig->addFilter($hiveFilter);
 
 $test_valueFilter = new Twig_SimpleFilter('test_value', function ($column) {
     $value = '';
-    switch (strtoupper($column->type)) {
-        case 'CHAR':
-        case 'VARCHAR':
-        case 'TINYTEXT':
-        case 'TEXT':
-        case 'MEDIUMTEXT':
-        case 'LONGTEXT':
-        case 'ENUM':
-        case 'DATETIME':
-        case 'TIME':
-        case 'YEAR':
-            $value = $column->name . '0';
-            break;
-        case 'TINYINT':
-        case 'SMALLINT':
-        case 'MEDIUMINT':
-        case 'INT':
-        case 'TIMESTAMP':
-        case 'BIGINT':
-        case 'FLOAT':
-        case 'DOUBLE':
-        case 'DECIMAL':
+    switch ($column->type) {
+        case 'Int':
+        case 'Long':
+        case 'Float':
+        case 'Double':
             $value = 1;
             break;
-        case 'DATE':
-            $value = '2019-04-26 00:00:00';
+        case 'String':
+            $value = '"' . $column->name . '0' .  '"';
             break;
+        case 'List':
+            $value = 'listOf(' . '"' . $column->name . '0' .  '"' . ')';
+            break;
+        case 'JsonObject':
+            $value = 'JsonObject()';
+            break;
+        case 'Boolean':
+            $value = "true";
+            break;
+        case 'Enum':
+            $value = $column->subtype . '.values()[0]';
+            break;
+            
+        default:
+            $value = $column->type;
     }
     return $value;
 });
 $twig->addFilter($test_valueFilter);
+
+$default_value = new Twig_SimpleFilter('default_value', function ($column) {
+    $value = '';
+    switch ($column->type) {
+        case 'Int':
+        case 'Long':
+        case 'Float':
+        case 'Double':
+            $value = 0;
+            break;
+        case 'String':
+            $value = '""';
+            break;
+        case 'List':
+            $value = 'listOf()';
+            break;
+        case 'JsonObject':
+            $value = 'JsonObject()';
+            break;
+        case 'Boolean':
+            $value = "true";
+            break;
+        case 'Enum':
+            $value = $column->subtype . '.values()[0]';
+            break;
+        default:
+            $value = "";
+    }
+    return $value;
+});
+$twig->addFilter($default_value);
 
 $twig->addFilter(new Twig_SimpleFilter('cast', function ($column) {
     $value = '';
@@ -172,6 +222,26 @@ $twig->addFilter(new Twig_SimpleFilter('cast', function ($column) {
     return $value;
 }));
 
+$twig->addFilter(new Twig_SimpleFilter('json_type', function ($column) {
+    switch ($column->type) {
+        case 'Int':
+            $value = 'Integer';
+            break;
+        case 'List':
+            $value = 'JsonArray';
+            break;
+        case 'Enum':
+            $value = 'String';
+            break;
+        case 'JsonObject':
+            $value = 'JsonObject';
+            break;
+        default:
+            $value = $column->type;
+    }
+    return $value;
+}));
+
 $twig->addFunction(new Twig_SimpleFunction('env', function ($key) {
     return getenv($key);
 }));
@@ -181,6 +251,7 @@ $dbName = $conn->getDatabaseName();
 $db = new DB($dbName);
 
 $query = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '" . $dbName . "'";
+
 $tb_objs = $conn->select($query);
 
 $tables = getenv('TABLES');
@@ -193,15 +264,65 @@ foreach ($tb_objs as $tb_obj) {
         }
     }
     $table = new Table($tb_obj);
-    $columns = $conn->select("select COLUMN_NAME,DATA_TYPE,CHARACTER_MAXIMUM_LENGTH,COLUMN_COMMENT from information_schema.COLUMNS where table_name = '" . $table->name . "' and TABLE_SCHEMA = '" . $dbName . "'");
+    $columns = $conn->select("select COLUMN_NAME,DATA_TYPE,CHARACTER_MAXIMUM_LENGTH,COLUMN_COMMENT from information_schema.COLUMNS where table_name = '" . $table->name . "' and TABLE_SCHEMA = '" . $dbName . "' order by COLUMN_NAME");
     foreach ($columns as $column_obj) {
         if (in_array($column_obj->COLUMN_NAME, ['id', 'updated', 'created', 'updated_at', 'created_at', 'deleted_at'])) {
             continue;
         }
+        $type = '';
+        $subtype = '';
+        if(!empty($column_obj->COLUMN_COMMENT)){
+            $arr = explode(',',$column_obj->COLUMN_COMMENT);
+            
+            if(count($arr) > 0){
+                $t = explode(':', $arr[0]);
+                
+                if(count($t) == 2){
+                    $type = $t[0];
+                    $subtype = $t[1];
+                }
+            }
+
+        }
+        if($type == ''){
+
+            switch (strtoupper($column_obj->DATA_TYPE)) {
+                case 'TINYINT':
+                    $type = 'Boolean';
+                    break;
+                case 'SMALLINT':
+                case 'MEDIUMINT':
+                case 'INT':
+                    $type = 'Int';
+                    break;
+                case 'BIGINT':
+                    $type = 'Long';
+                    break;
+                case 'DATE':
+                case 'DATETIME':
+                    $type = 'Long';
+                    break;
+                case 'FLOAT':
+                    $type = 'Float';
+                    break;
+                case 'DOUBLE':
+                    $type = 'Double';
+                    break;
+                case 'DECIMAL':
+                    $type = 'Float';
+                    break;
+                    case 'JSON':
+                $type = 'JsonObject';
+                    break;
+                default:
+                    $type = 'String';
+            }
+        }
         $column = new Column();
         $column->name = $column_obj->COLUMN_NAME;
         $column->comment = $column_obj->COLUMN_COMMENT;
-        $column->type = $column_obj->DATA_TYPE;
+        $column->type = $type;
+        $column->subtype = $subtype;
         $column->size = intval($column_obj->CHARACTER_MAXIMUM_LENGTH);
         $column->table = $table;
 
@@ -247,5 +368,14 @@ foreach ($db->tables as &$table) {
         $table->refTables[] = $db->tablesMap[$ref->TABLE_NAME];
     }
 }
+
+// foreach($db->tables as $table){
+//     if($table->name =='Order'){
+//         foreach($table->columns as $i){
+//             var_dump($i->type);
+//         }
+//         exit;
+//     }
+// }
 
 $twig->render($entry, ['db' => $db]);
