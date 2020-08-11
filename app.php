@@ -363,18 +363,22 @@ foreach ($db->tables as &$table) {
 
 
     $refs = $conn->select("select TABLE_NAME,COLUMN_NAME,CONSTRAINT_NAME, REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where CONSTRAINT_NAME != 'PRIMARY' and REFERENCED_TABLE_NAME = '" . $table->name . "' and table_name is not null and TABLE_SCHEMA ='" . $dbName . "'");
+
     $table->refTables = [];
     foreach ($refs as $ref) {
         $table->refTables[] = $db->tablesMap[$ref->TABLE_NAME];
     }
 }
+foreach($db->tables as &$table){
+    $table->realname = $table->name;
+    $table->name = str_replace(getenv('PREFIX'), '', $table->name);
+    echo $table->name . "\n";
+}
 
-// foreach($db->tables as $table){
-//     if($table->name =='Order'){
-//         foreach($table->columns as $i){
-//             var_dump($i->type);
-//         }
-//         exit;
+// foreach($db->tables as &$table){
+//     if($table->name =='tb_platform_channel'){
+//         var_dump($table->refTables);
+//         exit();
 //     }
 // }
 

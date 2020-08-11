@@ -48,6 +48,9 @@ GET /api/{{table.name}}s
 {% for ref in table.refTables%}
 |{{ ref.name }}s|array| 见 [{{ref.name | camel}}](#{{ref.name | camel}}) |
 {% endfor %}
+{% for column in table.foreignKeys %}
+|{{ column.referenceTable.name }}s| object| 见 [{{rcolumn.referenceTable.name | camel}}](#{{column.referenceTable.name | camel}}) |
+{% endfor %}
 
 {% for ref in table.refTables%}
 ##### {{ ref.name | camel}}
@@ -61,3 +64,14 @@ GET /api/{{table.name}}s
 
 {% endfor %}
 
+{% for column in table.foreignKeys%}
+##### {{ column.referenceTable.name | camel}}
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+{% for column in column.referenceTable.columns %}
+{% if column.name not in ['{{ref.primaryKey}}', '{{table.name}}_id', 'created_at', 'updated_at', 'updated_by']%}
+|{{ column.name }}|{{ column.type|hive | lower }} | {{column.comment}}|
+{% endif %}
+{% endfor %}
+{% endfor %}

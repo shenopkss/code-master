@@ -4,6 +4,14 @@ namespace App\Models\{{ env('NAMESPACE')| camel }};
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+
+
+/**
+{% for column in table.columns %}
+{% if column.name not in ['created_at', 'updated_at', 'deleted_at']%}
+ * @property {{column|cast}} ${{column.name}}
+{% endif %}{% endfor %}
+*/
 class {{ table.name | camel }} extends Model {
 
     protected $connection = '{{ env('NAMESPACE') }}';
@@ -12,7 +20,7 @@ class {{ table.name | camel }} extends Model {
 
     protected $primaryKey = '{{ table.primaryKey }}';
 
-    protected $table = '{{ table.name }}';
+    protected $table = '{{table.realname }}';
 
 
     protected $fillable = [{% for column in table.columns %}{% if column.name not in ['created_at', 'updated_at', 'deleted_at']%}'{{ column.name }}', {% endif %}{% endfor %}];
@@ -23,14 +31,14 @@ class {{ table.name | camel }} extends Model {
     {% for column in table.foreignKeys %}
     public function {{ column.referenceTable.name }}()
     {
-    return $this->belongsTo('App\Models\{{ column.referenceTable.name | camel }}');
+    return $this->belongsTo('App\Models\{{ env('NAMESPACE')| camel }}\{{ column.referenceTable.name | camel }}');
     }
     {% endfor %}
 
     {% for ftable in table.refTables%}
     public function {{ ftable.name }}s()
     {
-    return $this->hasMany('App\Models\{{ ftable.name | camel }}');
+    return $this->hasMany('App\Models\{{ env('NAMESPACE')| camel }}\{{ ftable.name | camel }}');
     }
     {% endfor %}
 }
