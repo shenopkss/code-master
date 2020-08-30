@@ -11,6 +11,7 @@ $capsule->addConnection(array(
     'database'  => getenv('DB_DATABASE'),
     'username'  => getenv('DB_USERNAME'),
     'password'  => getenv('DB_PASSWORD'),
+    'port'  => getenv('DB_PORT', '3306'),
     'charset'   => 'utf8',
     'collation' => 'utf8_unicode_ci',
     'prefix'    => ''

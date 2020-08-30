@@ -260,12 +260,12 @@ $tb_objs = $conn->select($query);
 $tables = getenv('TABLES');
 
 foreach ($tb_objs as $tb_obj) {
-    if ($tables != false) {
-        $target = explode(',', $tables);
-        if (!in_array($tb_obj->TABLE_NAME, $target)) {
-            continue;
-        }
-    }
+//    if ($tables != false) {
+//        $target = explode(',', $tables);
+//        if (!in_array($tb_obj->TABLE_NAME, $target)) {
+//            continue;
+//        }
+//    }
     $table = new Table($tb_obj);
     $columns = $conn->select("select COLUMN_NAME,DATA_TYPE,CHARACTER_MAXIMUM_LENGTH,COLUMN_COMMENT from information_schema.COLUMNS where table_name = '" . $table->name . "' and TABLE_SCHEMA = '" . $dbName . "' order by COLUMN_NAME");
     foreach ($columns as $column_obj) {
