@@ -1,7 +1,7 @@
 {
     "require": {
         "vlucas/phpdotenv": "^3.3",
-        "twig/twig": "^2.8",
+        "twig/twig": "^3.0",
         "league/flysystem": "^1.0",
         "illuminate/database": "^5.8",
         "illuminate/events": "^5.8",

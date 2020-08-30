@@ -1,0 +1,23 @@
+<?php
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Requests;
+use App\Http\Controllers\Controller;
+
+use Illuminate\Http\Request;
+use App\Models\{{table.name | camel }};
+{% for column in table.foreignKeys %}
+use App\Models\{{column.referenceTable.name | camel }};
+{% endfor %}
+{% for ref in table.refTables%}
+use App\Models\{{ref.name | camel }};
+{% endfor %}
+
+use App\Http\Traits\{{table.name | camel }}Restable;
+
+use Redirect, Input;
+use Auth;
+
+class {{table.name | camel }}Controller extends Controller {
+    use {{table.name | camel }}Restable;
+}

@@ -1,0 +1,81 @@
+<?php
+
+namespace App\Tests;
+
+/**
+ * Class ExampleTest
+ * @package App\Tests
+ */
+class {{table.name | camel}}Test extends TestCase
+{
+    /**
+     * A basic test example.
+     *
+     * @return void
+     */
+    public function testCurd()
+    {
+        {% for column in table.foreignKeys %}
+        ${{column.referenceTable.name}} = factory('App\Models\{{column.referenceTable.name | camel}}')->create();
+        {% endfor %}
+
+        {% for ref in table.refTables%}
+            {% for column in ref.foreignKeys %}
+                {% if column.referenceTable.name != table.name %}
+                ${{column.referenceTable.name}} = factory('App\Models\{{column.referenceTable.name | camel}}')->create();
+                {% endif %}
+            {% endfor %}
+            ${{ref.name}} = factory('App\Models\{{ref.name | camel}}')->make([
+                {% for column in ref.foreignKeys %}
+                    {% if column.referenceTable.name != table.name %}
+                        '{{ column.name }}' => ${{column.referenceTable.name}}->{{column.referenceTable.primaryKey}},
+                    {% endif %}
+                {% endfor %}
+            ]);
+        {% endfor %}
+
+        $params = factory('App\Models\{{table.name | camel}}')->make([
+            {% for ref in table.refTables%}
+            '{{ref.name}}s' => [${{ref.name}}->toArray()],
+            {% endfor %}
+
+            {% for column in table.foreignKeys %}
+            '{{ column.name }}' => ${{column.referenceTable.name}}->{{column.referenceTable.primaryKey}},
+            {% endfor %}
+        ])->toArray();
+
+        $result = $this->json('POST', $this->getUrl('/{{table.name}}s'), $params)
+                       ->seeJson([
+                           'ret' => 0,
+                       ])
+                       ->response
+                       ->getContent()
+                   ;
+        $json = json_decode($result, true);
+        $id = $json['data']['{{table.primaryKey}}'];
+
+        $result = $this->json('PUT', $this->getUrl("/{{table.name}}s/$id"), $params)
+                       ->seeJson([
+                           'ret' => 0,
+                       ])
+                       ->response
+                       ->getContent();
+        ;
+
+        $result = $this->json('GET', $this->getUrl("/{{table.name}}s/$id"))
+                       ->seeJson([
+                           'ret' => 0,
+                       ])
+                       ->response
+                       ->getContent();
+        ;
+
+        $result = $this->json('DELETE', $this->getUrl("/{{table.name}}s/$id"))
+                       ->seeJson([
+                           'ret' => 0,
+                       ])
+                       ->response
+                       ->getContent();
+        ;
+    }
+}

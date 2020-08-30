@@ -1,0 +1,30 @@
+import request from '@/utils/request';
+
+export async function get(id) {
+  return request(`/admin/{{table.name | underscore}}/${id}`);
+}
+export async function query(params) {
+  return request(`/admin/{{table.name | underscore}}`, {
+      params
+  });
+}
+
+export async function create(params) {
+  return request(`/admin/{{table.name | underscore}}`, {
+    method: 'POST',
+    data: params,
+  });
+}
+
+export async function update(id, params) {
+  return request(`/admin/{{table.name | underscore}}/${id}`, {
+    method: 'PUT',
+    data: params,
+  });
+}
+
+export async function destory(id, params) {
+  return request(`/admin/{{table.name | underscore}}/${id}`, {
+    method: 'delete'
+  });
+}

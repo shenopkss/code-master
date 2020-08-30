@@ -14,18 +14,7 @@ $capsule->addConnection(array(
     'charset'   => 'utf8',
     'collation' => 'utf8_unicode_ci',
     'prefix'    => ''
-), "honghu");
-
-$capsule->addConnection(array(
-    'driver'    => 'mysql',
-    'host'      => getenv('DAOJIAN_DB_HOST'),
-    'database'  => getenv('DAOJIAN_DB_DATABASE'),
-    'username'  => getenv('DAOJIAN_DB_USERNAME'),
-    'password'  => getenv('DAOJIAN_DB_PASSWORD'),
-    'charset'   => 'utf8',
-    'collation' => 'utf8_unicode_ci',
-    'prefix'    => ''
-), "daojian_game_config");
+), 'default');
 
 //$capsule->setEventDispatcher(new Dispatcher(new Container));
 // Make this Capsule instance available globally via static methods... (optional)

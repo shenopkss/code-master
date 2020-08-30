@@ -1,0 +1,91 @@
+@extends('app')
+
+@section('header')
+<link href="/plugins/datatables/dataTables.bootstrap.css" rel="stylesheet" type="text/css" />
+@endsection
+
+@section('content')
+<div class="content-wrapper" style="min-height: 916px;">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>
+            {{ table.name | camel }}
+            <small></small>
+        </h1>
+        <ol class="breadcrumb">
+            <li><a href="#"><i class="fa fa-dashboard"></i> {{ table.name | camel }} </a></li>
+        </ol>
+    </section>
+    <!-- Main content -->
+    <section class="content">
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="box">
+<!--                    <div class="box-header">-->
+                        <!--[><h3 class="box-title">Data Table With Full Features</h3><]-->
+                    <!--</div>[> /.box-header <]-->
+                    <div class="box-body">
+                        <table id="example1" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    {% for column in table.noForeignKeys%}
+                                    <th>{{ column.name }}</th>
+                                    {% endfor %}
+                                    {% for column in table.foreignKeys%}
+                                    <th>{{ column.referenceTable.name }}</th>
+                                    {% endfor %}
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($data as $item)
+                                <tr>
+                                    {% for column in table.noForeignKeys%}
+                                    <td>{{'{{'}}$item->{{ column.name }}{{'}}'}}</td>
+                                    {% endfor %}
+                                    {% for column in table.foreignKeys %}
+                                    <td>{{ '{{' }}$item->{{ column.referenceTable.name }}->name{{ '}}' }}</td>
+                                    {% endfor %}
+                                    <td class="">
+                                        <a href="/{{ table.name | camel }}/edit/{{ '{{ $item->id }}' }}" class="btn btn-info btn-sm"><i class="fa fa-fw fa-edit"></i>编辑</a>
+                                        <a onclick="destroy(this, {{'{{ $item->id }}'}})" class="btn btn-danger btn-sm"><i class="fa fa-fw fa-trash-o"></i>删除</a>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div><!-- /.box-body -->
+                </div><!-- /.box -->
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </section>
+</div>
+@endsection
+@section('footer')
+<script src="/plugins/datatables/jquery.dataTables.js" type="text/javascript"></script>
+<script src="/plugins/datatables/dataTables.bootstrap.js" type="text/javascript"></script>
+<!-- SlimScroll -->
+<script src="/plugins/slimScroll/jquery.slimscroll.min.js" type="text/javascript"></script>
+<!-- FastClick -->
+<script src='/plugins/fastclick/fastclick.min.js'></script>
+<script type="text/javascript">
+$(function () {
+    $("#example1").dataTable();
+});
+
+function destroy(dom, id){
+    if(confirm("确认删除？")){
+        $.post('/Activity/destroy/' + id, function(result){
+            if(result.isSuccess == true){
+                $(dom).parents('tr').hide(500, function(){
+                    $(this).remove();
+                });
+            }else{
+                alert(result.msg);
+            }
+        });
+    }
+}
+
+</script>
+@endsection

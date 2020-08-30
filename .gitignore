@@ -2,5 +2,7 @@ src/
 vendor/
 .DS_Store
 .env
+.env*
+*.sh
 composer.lock
 .php_cs.cache

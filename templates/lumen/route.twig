@@ -1,0 +1,28 @@
+<?php
+$router->get('/', function () {
+    return 'success';
+});
+
+$router->group(['prefix' => 'api'], function () use ($router) {
+    $router->get('/captcha', 'AuthController@captcha');
+    $router->post('/login', 'AuthController@login');
+
+    $router->get('/upload_token', 'UtilsController@uploadToken');
+});
+
+$router->group(['middleware' => ['auth'], 'prefix' => 'admin'], function () use($router) {
+{% for table in db.tables %}
+
+$router->group(['prefix' => '{{ table.name }}', 'middleware' => ['permission:{{table.name}}']], function() use($router)
+{
+    $router->get('/', 'Admin\{{ table.name | camel }}Controller@query');
+    $router->post('/', 'Admin\{{ table.name | camel }}Controller@store');
+    $router->get('/create', 'Admin\{{ table.name | camel }}Controller@create');
+    $router->get('/{id}', 'Admin\{{ table.name | camel }}Controller@get');
+    $router->get('/{id}/edit', 'Admin\{{ table.name | camel }}Controller@edit');
+    $router->put('/{id}', 'Admin\{{ table.name | camel }}Controller@update');
+    $router->delete('/{id}', 'Admin\{{ table.name | camel }}Controller@destroy');
+});
+{% endfor %}
+
+});

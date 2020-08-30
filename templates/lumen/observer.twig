@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Observers;
+
+use App\Models\{{table.name | camel}};
+use Illuminate\Support\Facades\Redis;
+
+class {{table.name | camel}}Observer
+{
+    const TABLE_KEY = 'app:{{table.name}}:%d';
+
+    public function creating({{table.name | camel}} $entity)
+    {
+    }
+
+    public function updated({{table.name | camel}} $entity)
+    {
+        Redis::delete(sprintf(self::TABLE_KEY, $entity->{{table.primaryKey}}));
+    }
+
+    public function deleted({{table.name | camel}} $entity)
+    {
+        Redis::delete(sprintf(self::TABLE_KEY, $entity->{{table.primaryKey}}));
+    }
+}

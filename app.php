@@ -1,42 +1,41 @@
 #!/usr/bin/env php
 <?php
-
 require_once 'vendor/autoload.php';
 
-$dotenv = Dotenv\Dotenv::create(__DIR__, '.env');
-$dotenv->load();
+$entry = $argv[1];
+$database = $argv[2];
 
-require_once 'database.php';
-require_once 'schemas.php';
+$env = ".env.$database";
+$dotenv = Dotenv\Dotenv::create(__DIR__, $env);
+$dotenv->load();
 
 use Illuminate\Database\Capsule\Manager as Capsule;
 use League\Flysystem\Filesystem as Filesystem;
 use League\Flysystem\Adapter\Local;
 
-$entry = $argv[1];
-$connection = $argv[2];
+require_once 'database.php';
+require_once 'schemas.php';
 
 $filesystem = new Filesystem($adapter = new Local('./src'));
 $twig = (object) null;
-if (strpos($entry, '.twig') === false) {
-    $twig = new \Twig_Environment(new \Twig_Loader_String());
-} else {
-    $loader = new Twig_Loader_Filesystem('./templates');
-    $twig = new Twig_Environment($loader, ['cache' => false]);
-}
 
-$function = new Twig_SimpleFunction('render', function ($template, $data, $file) use ($twig, $filesystem) {
+$loader = new \Twig\Loader\FilesystemLoader('./templates');
+$twig = new \Twig\Environment($loader, [
+    'cache' => false
+]);
+
+$function = new \Twig\TwigFunction('render', function ($template, $data, $file) use ($twig, $filesystem) {
     $content = $twig->render($template, $data);
     $filesystem->put($file, $content);
 });
 $twig->addFunction($function);
 
-$filter = new Twig_SimpleFilter('underscore', function ($string) {
+$filter = new \Twig\TwigFilter('underscore', function ($string) {
     $string = preg_replace('/(?<=\\w)(?=[A-Z])/', "_$1", $string);
     return strtolower($string);
 });
 $twig->addFilter($filter);
-$camelfilter = new Twig_SimpleFilter('camel', function ($string) {
+$camelfilter = new \Twig\TwigFilter('camel', function ($string) {
     //复数形式改成单数
     if ($string[-1] == 's') {
         $string = substr($string, 0, strlen($string) - 1);
@@ -58,11 +57,11 @@ $camelfilter = new Twig_SimpleFilter('camel', function ($string) {
 });
 $twig->addFilter($camelfilter);
 
-$lcamelfilter = new Twig_SimpleFilter('lcamel', function ($string) {
+$lcamelfilter = new \Twig\TwigFilter('lcamel', function ($string) {
     $result = '';
     $arr = explode('_', $string);
-    foreach ($arr as $index=>$str) {
-        if($index ==0){
+    foreach ($arr as $index => $str) {
+        if ($index == 0) {
             $result .= strtolower($str);
             continue;
         }
@@ -78,52 +77,52 @@ $lcamelfilter = new Twig_SimpleFilter('lcamel', function ($string) {
 
 $twig->addFilter($lcamelfilter);
 
-$hiveFilter = new Twig_SimpleFilter('hive', function ($string) {
-    $type = '';
-    switch (strtoupper($string)) {
-        case 'CHAR':
-        case 'VARCHAR':
-        case 'TINYTEXT':
-        case 'TEXT':
-        case 'MEDIUMTEXT':
-        case 'LONGTEXT':
-            // case 'Enum':
-            // case 'DATETIME':
-            // case 'TIME':
-            // case 'YEAR':
-            $type = 'STRING';
-            break;
-            // case 'TINYINT':
-            // $type = 'TINYINT';
-            // break;
-        case 'SMALLINT':
-            $type = 'SMALLINT';
-            break;
-        case 'MEDIUMINT':
-        case 'TINYINT':
-        case 'INT':
-        case 'TIMESTAMP':
-            $type = 'INT';
-            break;
-        case 'BIGINT':
-            $type = 'BIGINT';
-            break;
-        case 'FLOAT':
-            $type = 'FLOAT';
-            break;
-        case 'DOUBLE':
-        case 'DECIMAL':
-            $type = 'DOUBLE';
-            break;
-        case 'DATE':
-            $type = 'DATE';
-            break;
-    }
-    return $type;
-});
-$twig->addFilter($hiveFilter);
+// $hiveFilter = new \Twig\TwigFilter('hive', function ($string) {
+//     $type = '';
+//     switch (strtoupper($string)) {
+//         case 'CHAR':
+//         case 'VARCHAR':
+//         case 'TINYTEXT':
+//         case 'TEXT':
+//         case 'MEDIUMTEXT':
+//         case 'LONGTEXT':
+//             // case 'Enum':
+//             // case 'DATETIME':
+//             // case 'TIME':
+//             // case 'YEAR':
+//             $type = 'STRING';
+//             break;
+//             // case 'TINYINT':
+//             // $type = 'TINYINT';
+//             // break;
+//         case 'SMALLINT':
+//             $type = 'SMALLINT';
+//             break;
+//         case 'MEDIUMINT':
+//         case 'TINYINT':
+//         case 'INT':
+//         case 'TIMESTAMP':
+//             $type = 'INT';
+//             break;
+//         case 'BIGINT':
+//             $type = 'BIGINT';
+//             break;
+//         case 'FLOAT':
+//             $type = 'FLOAT';
+//             break;
+//         case 'DOUBLE':
+//         case 'DECIMAL':
+//             $type = 'DOUBLE';
+//             break;
+//         case 'DATE':
+//             $type = 'DATE';
+//             break;
+//     }
+//     return $type;
+// });
+// $twig->addFilter($hiveFilter);
 
-$test_valueFilter = new Twig_SimpleFilter('test_value', function ($column) {
+$test_valueFilter = new \Twig\TwigFilter('test_value', function ($column) {
     $value = '';
     switch ($column->type) {
         case 'Int':
@@ -147,7 +146,9 @@ $test_valueFilter = new Twig_SimpleFilter('test_value', function ($column) {
         case 'Enum':
             $value = $column->subtype . '.values()[0]';
             break;
-            
+        case 'Date':
+            $value = 'Date()';
+            break;
         default:
             $value = $column->type;
     }
@@ -155,7 +156,7 @@ $test_valueFilter = new Twig_SimpleFilter('test_value', function ($column) {
 });
 $twig->addFilter($test_valueFilter);
 
-$default_value = new Twig_SimpleFilter('default_value', function ($column) {
+$default_value = new \Twig\TwigFilter('default_value', function ($column) {
     $value = '';
     switch ($column->type) {
         case 'Int':
@@ -179,6 +180,9 @@ $default_value = new Twig_SimpleFilter('default_value', function ($column) {
         case 'Enum':
             $value = $column->subtype . '.values()[0]';
             break;
+        case 'Date':
+            $value = 'Date()';
+            break;
         default:
             $value = "";
     }
@@ -186,35 +190,33 @@ $default_value = new Twig_SimpleFilter('default_value', function ($column) {
 });
 $twig->addFilter($default_value);
 
-$twig->addFilter(new Twig_SimpleFilter('cast', function ($column) {
+$twig->addFilter(new \Twig\TwigFilter('cast', function ($column) {
     $value = '';
-    if (strrpos($column->comment, "(json)") > 0) {
-        return 'array';
-    }
-    switch (strtoupper($column->type)) {
-        case 'TINYINT':
-        case 'SMALLINT':
-        case 'MEDIUMINT':
-        case 'INT':
+    switch ($column->type) {
+        case 'Boolean':
+            $value = 'boolean';
+            break;
+        case 'Int':
             $value = 'integer';
             break;
-        case 'BIGINT':
+        case 'Long':
             $value = 'bigint';
             break;
-        case 'DATE':
-            $value = 'date';
-            break;
-        case 'DATETIME':
+        case 'Date':
+        case 'Datetime':
             $value = 'datetime';
             break;
-        case 'FLOAT':
+        case 'Float':
             $value = 'float';
             break;
-        case 'DOUBLE':
+        case 'Double':
             $value = 'double';
             break;
-        case 'DECIMAL':
+        case 'Decimal':
             $value = 'decimal';
+            break;
+        case 'Json':
+            $value = 'array';
             break;
         default:
             $value = 'string';
@@ -222,7 +224,7 @@ $twig->addFilter(new Twig_SimpleFilter('cast', function ($column) {
     return $value;
 }));
 
-$twig->addFilter(new Twig_SimpleFilter('json_type', function ($column) {
+$twig->addFilter(new \Twig\TwigFilter('json_type', function ($column) {
     switch ($column->type) {
         case 'Int':
             $value = 'Integer';
@@ -242,10 +244,11 @@ $twig->addFilter(new Twig_SimpleFilter('json_type', function ($column) {
     return $value;
 }));
 
-$twig->addFunction(new Twig_SimpleFunction('env', function ($key) {
+$twig->addFunction(new \Twig\TwigFunction('env', function ($key) {
     return getenv($key);
 }));
 
+$connection = 'default';
 $conn = Capsule::connection($connection);;
 $dbName = $conn->getDatabaseName();
 $db = new DB($dbName);
@@ -271,21 +274,19 @@ foreach ($tb_objs as $tb_obj) {
         }
         $type = '';
         $subtype = '';
-        if(!empty($column_obj->COLUMN_COMMENT)){
-            $arr = explode(',',$column_obj->COLUMN_COMMENT);
-            
-            if(count($arr) > 0){
+        if (!empty($column_obj->COLUMN_COMMENT)) {
+            $arr = explode(',', $column_obj->COLUMN_COMMENT);
+
+            if (count($arr) > 0) {
                 $t = explode(':', $arr[0]);
-                
-                if(count($t) == 2){
+
+                if (count($t) == 2) {
                     $type = $t[0];
                     $subtype = $t[1];
                 }
             }
-
         }
-        if($type == ''){
-
+        if ($type == '') {
             switch (strtoupper($column_obj->DATA_TYPE)) {
                 case 'TINYINT':
                     $type = 'Boolean';
@@ -300,7 +301,7 @@ foreach ($tb_objs as $tb_obj) {
                     break;
                 case 'DATE':
                 case 'DATETIME':
-                    $type = 'Long';
+                    $type = 'Date';
                     break;
                 case 'FLOAT':
                     $type = 'Float';
@@ -311,8 +312,8 @@ foreach ($tb_objs as $tb_obj) {
                 case 'DECIMAL':
                     $type = 'Float';
                     break;
-                    case 'JSON':
-                $type = 'JsonObject';
+                case 'JSON':
+                    $type = 'Json';
                     break;
                 default:
                     $type = 'String';
@@ -369,10 +370,16 @@ foreach ($db->tables as &$table) {
         $table->refTables[] = $db->tablesMap[$ref->TABLE_NAME];
     }
 }
-foreach($db->tables as &$table){
+foreach ($db->tables as &$table) {
     $table->realname = $table->name;
     $table->name = str_replace(getenv('PREFIX'), '', $table->name);
-    echo $table->name . "\n";
+
+    // if($table->name == 'course'){
+    //     foreach($table->columns as $c){
+    //         var_dump($c->name, $c->type);
+    //     }
+    //     exit;
+    // }
 }
 
 // foreach($db->tables as &$table){

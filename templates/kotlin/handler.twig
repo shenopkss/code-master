@@ -18,20 +18,7 @@ import io.vertx.kotlin.core.json.obj
 object {{table.name}}Handler {
   suspend fun create(ctx: RoutingContext) {
     val params = ctx.bodyAsJson
-    val {{table.name | lcamel}} = {{table.name}}()
-{% for column in table.columns %}
-    if(params.containsKey("{{ column.name }}")){
-{% if column.name not in [table.primaryKey, 'created_at', 'updated_at', 'deleted_at']%}
-{% if column.type == 'List' %}
-      {{table.name | lcamel}}.{{ column.name }} = params.getJsonArray("{{ column.name }}").map { it.to{{column.subtype}}() }
-{% elseif column.type == 'Enum' %}
-      {{table.name | lcamel}}.{{ column.name }} = {{column.subtype}}.valueOf(params.getString("{{ column.name }}")) 
-{% else %}
-      {{table.name | lcamel}}.{{ column.name }} = params.get{{column | json_type}}("{{ column.name }}")
-{% endif %}
-{% endif %}
-    }
-{% endfor %}
+    val {{table.name | lcamel}} = params.mapTo({{table.name}}::class.java)
    
     {{table.name | lcamel}}.save()
     ctx.response().success({{table.name | lcamel}}.id)

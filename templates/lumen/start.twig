@@ -1,0 +1,24 @@
+{% for table in db.tables %}
+{% set data = {'table': table, 'db' : db} %}
+{{ render('lumen/controller.twig', data, "#{db.name}/controller/#{table.name|camel}Controller.php")}}
+{{ render('lumen/trait.twig', data, "#{db.name}/trait/#{table.name|camel}Restable.php")}}
+{{ render('lumen/observer.twig', data, "#{db.name}/observer/#{table.name|camel}Observer.php")}}
+{{ render('lumen/model.twig', data, "#{db.name}/model/#{table.name|camel}.php")}}
+{#{{ render('lumen/test.twig', data, "#{db.name}/test/#{table.name|camel}Test.php")}}#}
+{#{{ render('lumen/factory.twig', data, "#{db.name}/factory/#{table.name|camel}Factory.php")}}#}
+{#{{ render('lumen/view/create.twig', data, "#{db.name}/view/#{table.name|camel}/create.blade.php")}}#}
+{#{{ render('lumen/view/edit.twig', data, "#{db.name}/view/#{table.name|camel}/edit.blade.php")}}#}
+{#{{ render('lumen/view/index.twig', data, "#{db.name}/view/#{table.name|camel}/index.blade.php")}}#}
+
+{# {{ render('lumen/api/list.twig', data, "#{db.name}/api/#{table.name}/list.md")}}
+{{ render('lumen/api/create.twig', data, "#{db.name}/api/#{table.name}/create.md")}}
+{{ render('lumen/api/update.twig', data, "#{db.name}/api/#{table.name}/update.md")}}
+{{ render('lumen/api/delete.twig', data, "#{db.name}/api/#{table.name}/delete.md")}}
+{{ render('lumen/api/find.twig', data, "#{db.name}/api/#{table.name}/find.md")}}#} #}
+
+{{ render('lumen/js/service.twig', {'table':table}, "#{db.name}/js/service/#{table.name | camel }.js")}}
+{{ render('lumen/js/model.twig', {'table':table}, "#{db.name}/js/model/#{table.name | camel }.js")}}
+
+{% endfor %}
+{{ render('lumen/db.twig', {'db':db}, "#{db.name}/db.md")}}
+{{ render('lumen/route.twig', {'db':db}, "#{db.name}/route.php")}}
