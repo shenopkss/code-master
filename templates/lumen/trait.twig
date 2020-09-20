@@ -58,23 +58,8 @@ trait {{table.name | camel }}Restable {
             $result = $query->paginate($per_page);
             $result->current = $result->currentPage();
         }
-        return $this->success($result);
+        return $result;
 	}
-
-    /**
-	 * Show the form for creating a new resource.
-	 *
-	 * @return Response
-	 */
-	public function create()
-	{
-        return view('{{table.name | camel }}.create', [
-            {% for column in table.foreignKeys %}
-            '{{column.referenceTable.name | camel }}s' => {{column.referenceTable.name | camel }}::all(),
-            {% endfor %}
-        ]);
-	}
-
 
     /**
      * Store a newly created resource in storage.
@@ -85,20 +70,16 @@ trait {{table.name | camel }}Restable {
     {
         $params = $request->only([{% for column in table.columns %}'{{column.name}}', {% endfor %}]);
         $entity = {{ table.name | camel}}::create($params);
-        if ($entity) {
-            {% for ref in table.refTables%}
-                ${{ref.name}}s = $request->input('{{ref.name}}s');
-                if(${{ref.name}}s){
-                    foreach(${{ref.name}}s as $item){
-                        $item['{{table.name}}_id'] = $entity->{{table.primaryKey}};
-                        {{ ref.name | camel }}::create($item);
-                    }
+        {% for ref in table.refTables%}
+            ${{ref.name}}s = $request->input('{{ref.name}}s');
+            if(${{ref.name}}s){
+                foreach(${{ref.name}}s as $item){
+                    $item['{{table.name}}_id'] = $entity->{{table.primaryKey}};
+                    {{ ref.name | camel }}::create($item);
                 }
-            {% endfor %}
-            return $this->success($entity);
-        } else {
-            return $this->failed();
-        }
+            }
+        {% endfor %}
+        return $entity;
     }
 
     /**
@@ -110,7 +91,7 @@ trait {{table.name | camel }}Restable {
     public function get($id)
     {
         $entity = {{table.name | camel }}::{% if table.foreignKeys | length > 0 and table.refTables | length > 1 %}with([{% for column in table.foreignKeys %}'{{ column.referenceTable.name }}', {% endfor %}{% for ref in table.refTables%}'{{ref.name}}s', {% endfor %}])->{% endif %}find($id);
-        return $this->success($entity);
+        return $entity;
     }
 
     /**
@@ -123,21 +104,17 @@ trait {{table.name | camel }}Restable {
     {
         $params = $request->only([{% for column in table.columns %}'{{column.name}}', {% endfor %}]);
         $result = {{ table.name | camel }}::find($id)->update($params);
-        if ($result !== false) {
-            {% for ref in table.refTables%}
-                ${{ref.name}}s = $request->input('{{ref.name}}s');
-                if(${{ref.name}}s){
-                    {{ ref.name | camel }}::where('{{table.name}}_id', $id)->delete();
-                    foreach(${{ref.name}}s as $item){
-                        $item['{{table.name}}_id'] = $id;
-                        {{ ref.name | camel }}::create($item);
-                    }
+        {% for ref in table.refTables%}
+            ${{ref.name}}s = $request->input('{{ref.name}}s');
+            if(${{ref.name}}s){
+                {{ ref.name | camel }}::where('{{table.name}}_id', $id)->delete();
+                foreach(${{ref.name}}s as $item){
+                    $item['{{table.name}}_id'] = $id;
+                    {{ ref.name | camel }}::create($item);
                 }
-            {% endfor %}
-            return $this->success($result);
-        } else {
-            return $this->failed($result);
-        }
+            }
+        {% endfor %}
+        return $result;
     }
 
     /**
@@ -153,10 +130,6 @@ trait {{table.name | camel }}Restable {
         $result &= {{ ft.name | camel }}::where('{{table.name}}_id', $id)->delete() !== false;
     {% endfor %}
         $result &= {{ table.name | camel }}::destroy($id) !== false;
-        if($result){
-            return $this->success();
-        }else{
-            return $this->failed();
-        }
+        return result;
 	}
 }
