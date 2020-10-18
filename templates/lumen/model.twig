@@ -27,19 +27,19 @@ class {{ table.name | camel }} extends Model {
 
 	protected $hidden = [];
 
-    {% for column in table.foreignKeys %}
+{% for column in table.foreignKeys %}
     public function {{ column.referenceTable.name }}()
     {
-    return $this->belongsTo('App\Models\{{ column.referenceTable.name | camel }}');
+        return $this->belongsTo('App\Models\{{ column.referenceTable.name | camel }}');
     }
-    {% endfor %}
+{% endfor %}
 
-    {% for ftable in table.refTables%}
+{% for ftable in table.refTables%}
     public function {{ ftable.name }}s()
     {
-    return $this->hasMany('App\Models\{{ ftable.name | camel }}');
+        return $this->hasMany('App\Models\{{ ftable.name | camel }}');
     }
-    {% endfor %}
+{% endfor %}
 
     protected function serializeDate(DateTimeInterface $date)
     {
