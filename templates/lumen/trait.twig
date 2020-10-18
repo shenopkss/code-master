@@ -25,7 +25,7 @@ trait {{table.name | camel }}Restable {
 	 */
 	public function query(Request $request)
 	{
-        //$page = intval($request->query('page'));
+        $current = intval($request->query('current'));
         $per_page = intval($request->query('pageSize', 20));
 
         $id = $request->query('id');
@@ -55,10 +55,10 @@ trait {{table.name | camel }}Restable {
         if($per_page == null){
             $result = $query->get();
         }else{
-            $result = $query->paginate($per_page);
+            $result = $query->paginate($per_page, ['*'], 'current', $current);
             $result->current = $result->currentPage();
         }
-        return $result;
+        return $this->success($result);
 	}
 
     /**
@@ -79,7 +79,7 @@ trait {{table.name | camel }}Restable {
                 }
             }
         {% endfor %}
-        return $entity;
+        return $this->success($entity);
     }
 
     /**
@@ -91,7 +91,7 @@ trait {{table.name | camel }}Restable {
     public function get($id)
     {
         $entity = {{table.name | camel }}::{% if table.foreignKeys | length > 0 and table.refTables | length > 1 %}with([{% for column in table.foreignKeys %}'{{ column.referenceTable.name }}', {% endfor %}{% for ref in table.refTables%}'{{ref.name}}s', {% endfor %}])->{% endif %}find($id);
-        return $entity;
+        return $this->success($entity);
     }
 
     /**
@@ -114,7 +114,7 @@ trait {{table.name | camel }}Restable {
                 }
             }
         {% endfor %}
-        return $result;
+        return $this->success($result);
     }
 
     /**
@@ -130,6 +130,6 @@ trait {{table.name | camel }}Restable {
         $result &= {{ ft.name | camel }}::where('{{table.name}}_id', $id)->delete() !== false;
     {% endfor %}
         $result &= {{ table.name | camel }}::destroy($id) !== false;
-        return result;
+        return $this->success($result);
 	}
 }
