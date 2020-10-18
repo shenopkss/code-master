@@ -19,7 +19,7 @@ import styles from './style.less';
 
 import Editor from '@/components/Editor'
 import CloudUpload from '@/components/CloudUpload'
-import { create } from '@/services/{{table.name | | camel}}'
+import { create } from '@/services/{{table.name | camel}}'
 
 
 const FormItem = Form.Item;

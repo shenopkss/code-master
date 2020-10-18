@@ -1,9 +1,10 @@
+
 import { DownOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Divider, Dropdown, Menu, message, Input, Tag,Popconfirm } from 'antd';
+import { Button, Divider, Dropdown, Menu, message, Input, Tag, Popconfirm } from 'antd';
 import React, { useState, useRef } from 'react';
 import { PageHeaderWrapper } from '@ant-design/pro-layout';
 import ProTable from '@ant-design/pro-table';
-import { destory, query } from '@/services/{{table.name | | camel}}';
+import { destory, query } from '@/services/User';
 
 import { Link } from 'umi';
 
@@ -12,60 +13,67 @@ const TableList = () => {
 
   const handleRemove = async (id, index) => {
     const hide = message.loading('正在删除');
-    if (await destory(id) !== false) {
+    if ((await destory(id)) !== false) {
       message.success('删除成功，即将刷新');
-      actionRef.current.reload()
+      actionRef.current.reload();
     }
     hide();
     return true;
   };
 
+
   const columns = [
-{% for index,column in table.columns %}
-{% if column.name not in [table.primaryKey, 'created_at', 'updated_at', 'deleted_at']%}
-    {
-      title: '{{column.comment}}',
-      dataIndex: '{{column.name}}',
-    },
-{% endif %}
-{% endfor %}
-    {
-      title: '操作',
-      dataIndex: 'option',
-      valueType: 'option',
-      render: (_, record, index) => (
-        <div>
-          <Link to={'/{{table.name | underscore}}/' + record._id}>编辑</Link>
-          <Divider type="vertical" />
-          <Popconfirm
-            title="确定删除吗?"
-            onConfirm={() => handleRemove(record._id, index)}
-            okText="确定"
-            cancelText="取消"
+  {% for index,column in table.columns %}
+  {% if column.name not in [table.primaryKey, 'created_at', 'updated_at', 'deleted_at']%}
+  {
+  title: '{{column.comment}}',
+  dataIndex: '{{column.name}}',
+  },
+  {% endif %}
+  {% endfor %}
+
+  {
+  title: '操作',
+  dataIndex: 'option',
+  valueType: 'option',
+  render: (_, record, index) => (
+  <div>
+      <Link to={'/student/user_id=' + record.id}>详细信息</Link>
+      {/*
+      <Divider type="vertical" />
+      <Popconfirm
+          title="确定删除吗?"
+          onConfirm={() => handleRemove(record.id, index)}
+          okText="确定"
+          cancelText="取消"
           >
-            <a href="#">删除</a>
-          </Popconfirm>
-        </div>
-      ),
-    },
+          <a href="#">删除</a>
+      </Popconfirm>
+      */}
+  </div>
+  ),
+  },
   ];
   return (
-    <PageHeaderWrapper>
-      <ProTable
-        headerTitle="查询表格"
-        actionRef={actionRef}
-        rowKey="_id"
-        toolBarRender={(action, { selectedRows }) => [
-          <Link to="/{{table.name | underscore}}/create">
-            <Button type="primary" > <PlusOutlined />新建 </Button>
-          </Link>
-        ]}
-        request={(params, sorter, filter) => query({ ...params, sorter, filter })}
-        columns={columns}
+  <PageHeaderWrapper>
+  <ProTable
+      headerTitle="查询表格"
+      actionRef={actionRef}
+      rowKey="id"
+      toolBarRender={(action, { selectedRows }) => [
+      <Link to="/user/create">
+      <Button type="primary">
+          {' '}
+          <PlusOutlined />
+          新建{' '}
+      </Button>
+      </Link>,
+      ]}
+      request={(params, sorter, filter) => query({ ...params, sorter, filter })}
+      columns={columns}
       />
-
-    </PageHeaderWrapper>
+  </PageHeaderWrapper>
   );
-};
+  };
 
 export default TableList;

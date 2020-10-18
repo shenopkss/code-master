@@ -125,32 +125,32 @@ $twig->addFilter($lcamelfilter);
 $test_valueFilter = new \Twig\TwigFilter('test_value', function ($column) {
     $value = '';
     switch ($column->type) {
-        case 'Int':
-        case 'Long':
-        case 'Float':
-        case 'Double':
-            $value = 1;
-            break;
-        case 'String':
-            $value = '"' . $column->name . '0' .  '"';
-            break;
-        case 'List':
-            $value = 'listOf(' . '"' . $column->name . '0' .  '"' . ')';
-            break;
-        case 'JsonObject':
-            $value = 'JsonObject()';
-            break;
-        case 'Boolean':
-            $value = "true";
-            break;
-        case 'Enum':
-            $value = $column->subtype . '.values()[0]';
-            break;
-        case 'Date':
-            $value = 'Date()';
-            break;
-        default:
-            $value = $column->type;
+    case 'Int':
+    case 'Long':
+    case 'Float':
+    case 'Double':
+        $value = 1;
+        break;
+    case 'String':
+        $value = '"' . $column->name . '0' .  '"';
+        break;
+    case 'List':
+        $value = 'listOf(' . '"' . $column->name . '0' .  '"' . ')';
+        break;
+    case 'JsonObject':
+        $value = 'JsonObject()';
+        break;
+    case 'Boolean':
+        $value = "true";
+        break;
+    case 'Enum':
+        $value = $column->subtype . '.values()[0]';
+        break;
+    case 'Date':
+        $value = 'Date()';
+        break;
+    default:
+        $value = $column->type;
     }
     return $value;
 });
@@ -159,32 +159,32 @@ $twig->addFilter($test_valueFilter);
 $default_value = new \Twig\TwigFilter('default_value', function ($column) {
     $value = '';
     switch ($column->type) {
-        case 'Int':
-        case 'Long':
-        case 'Float':
-        case 'Double':
-            $value = 0;
-            break;
-        case 'String':
-            $value = '""';
-            break;
-        case 'List':
-            $value = 'listOf()';
-            break;
-        case 'JsonObject':
-            $value = 'JsonObject()';
-            break;
-        case 'Boolean':
-            $value = "true";
-            break;
-        case 'Enum':
-            $value = $column->subtype . '.values()[0]';
-            break;
-        case 'Date':
-            $value = 'Date()';
-            break;
-        default:
-            $value = "";
+    case 'Int':
+    case 'Long':
+    case 'Float':
+    case 'Double':
+        $value = 0;
+        break;
+    case 'String':
+        $value = '""';
+        break;
+    case 'List':
+        $value = 'listOf()';
+        break;
+    case 'JsonObject':
+        $value = 'JsonObject()';
+        break;
+    case 'Boolean':
+        $value = "true";
+        break;
+    case 'Enum':
+        $value = $column->subtype . '.values()[0]';
+        break;
+    case 'Date':
+        $value = 'Date()';
+        break;
+    default:
+        $value = "";
     }
     return $value;
 });
@@ -193,53 +193,53 @@ $twig->addFilter($default_value);
 $twig->addFilter(new \Twig\TwigFilter('cast', function ($column) {
     $value = '';
     switch ($column->type) {
-        case 'Boolean':
-            $value = 'boolean';
-            break;
-        case 'Int':
-            $value = 'integer';
-            break;
-        case 'Long':
-            $value = 'bigint';
-            break;
-        case 'Date':
-        case 'Datetime':
-            $value = 'datetime';
-            break;
-        case 'Float':
-            $value = 'float';
-            break;
-        case 'Double':
-            $value = 'double';
-            break;
-        case 'Decimal':
-            $value = 'decimal';
-            break;
-        case 'Json':
-            $value = 'array';
-            break;
-        default:
-            $value = 'string';
+    case 'Boolean':
+        $value = 'boolean';
+        break;
+    case 'Int':
+        $value = 'integer';
+        break;
+    case 'Long':
+        $value = 'bigint';
+        break;
+    case 'Date':
+    case 'Datetime':
+        $value = 'datetime';
+        break;
+    case 'Float':
+        $value = 'float';
+        break;
+    case 'Double':
+        $value = 'double';
+        break;
+    case 'Decimal':
+        $value = 'decimal';
+        break;
+    case 'Json':
+        $value = 'array';
+        break;
+    default:
+        $value = 'string';
     }
     return $value;
 }));
 
 $twig->addFilter(new \Twig\TwigFilter('json_type', function ($column) {
     switch ($column->type) {
-        case 'Int':
-            $value = 'Integer';
-            break;
-        case 'List':
-            $value = 'JsonArray';
-            break;
-        case 'Enum':
-            $value = 'String';
-            break;
-        case 'JsonObject':
-            $value = 'JsonObject';
-            break;
-        default:
-            $value = $column->type;
+    case 'Int':
+        $value = 'Integer';
+        break;
+    case 'List':
+        $value = 'JsonArray';
+        break;
+    case 'Enum':
+        $value = 'String';
+        break;
+    case 'JsonObject':
+        $value = 'JsonObject';
+        break;
+    default:
+        $value = $column->type;
     }
     return $value;
 }));
@@ -260,12 +260,12 @@ $tb_objs = $conn->select($query);
 $tables = getenv('TABLES');
 
 foreach ($tb_objs as $tb_obj) {
-//    if ($tables != false) {
-//        $target = explode(',', $tables);
-//        if (!in_array($tb_obj->TABLE_NAME, $target)) {
-//            continue;
-//        }
-//    }
+    //    if ($tables != false) {
+    //        $target = explode(',', $tables);
+    //        if (!in_array($tb_obj->TABLE_NAME, $target)) {
+    //            continue;
+    //        }
+    //    }
     $table = new Table($tb_obj);
     $columns = $conn->select("select COLUMN_NAME,DATA_TYPE,CHARACTER_MAXIMUM_LENGTH,COLUMN_COMMENT from information_schema.COLUMNS where table_name = '" . $table->name . "' and TABLE_SCHEMA = '" . $dbName . "' order by COLUMN_NAME");
     foreach ($columns as $column_obj) {
@@ -288,35 +288,35 @@ foreach ($tb_objs as $tb_obj) {
         }
         if ($type == '') {
             switch (strtoupper($column_obj->DATA_TYPE)) {
-                case 'TINYINT':
-                    $type = 'Boolean';
-                    break;
-                case 'SMALLINT':
-                case 'MEDIUMINT':
-                case 'INT':
-                    $type = 'Int';
-                    break;
-                case 'BIGINT':
-                    $type = 'Long';
-                    break;
-                case 'DATE':
-                case 'DATETIME':
-                    $type = 'Date';
-                    break;
-                case 'FLOAT':
-                    $type = 'Float';
-                    break;
-                case 'DOUBLE':
-                    $type = 'Double';
-                    break;
-                case 'DECIMAL':
-                    $type = 'Float';
-                    break;
-                case 'JSON':
-                    $type = 'Json';
-                    break;
-                default:
-                    $type = 'String';
+            case 'TINYINT':
+                $type = 'Boolean';
+                break;
+            case 'SMALLINT':
+            case 'MEDIUMINT':
+            case 'INT':
+                $type = 'Int';
+                break;
+            case 'BIGINT':
+                $type = 'Long';
+                break;
+            case 'DATE':
+            case 'DATETIME':
+                $type = 'Date';
+                break;
+            case 'FLOAT':
+                $type = 'Float';
+                break;
+            case 'DOUBLE':
+                $type = 'Double';
+                break;
+            case 'DECIMAL':
+                $type = 'Float';
+                break;
+            case 'JSON':
+                $type = 'Json';
+                break;
+            default:
+                $type = 'String';
             }
         }
         $column = new Column();

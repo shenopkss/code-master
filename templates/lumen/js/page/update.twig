@@ -1,60 +1,40 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Button, Card, DatePicker, Input, Form, InputNumber, Radio, Select, Tooltip, Checkbox, Upload, Icon } from 'antd';
 import {
-  PlusOutlined
-} from '@ant-design/icons';
+  Button,
+  Card,
+  DatePicker,
+  Input,
+  Form,
+  InputNumber,
+  Radio,
+  Select,
+  Tooltip,
+  Checkbox,
+  Upload,
+  Icon,
+} from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
+import ImgCrop from 'antd-img-crop';
 import 'antd/es/modal/style';
 import 'antd/es/slider/style';
+import 'braft-editor/dist/index.css';
+
+const CheckboxGroup = Checkbox.Group;
 
 import { connect, FormattedMessage, formatMessage } from 'umi';
 import React, { useEffect, useState } from 'react';
 import { PageHeaderWrapper } from '@ant-design/pro-layout';
-import styles from './style.less';
+
+import Editor from '@/components/Editor';
+import CloudUpload from '@/components/CloudUpload';
 
 const FormItem = Form.Item;
+const { Option } = Select;
 
-const Create = props => {
+const Update = (props) => {
   const { submitting } = props;
 
   const [form] = Form.useForm();
-
-  useEffect(() => {
-    const { dispatch } = props;
-    let id = props.match.params.id
-    
-    dispatch({
-      type: '{{table.name | camel }}/get',
-      payload: id,
-      callback: (data) => {
-        if (data) {
-          form.setFieldsValue(data)
-        }
-      }
-    });
-  }, []);
-
-  const onFinish = values => {
-    console.log('onFinish', values)
-
-    const { dispatch } = props;
-    let id = props.match.params.id
-
-    dispatch({
-      type: '{{table.name}}/update',
-      payload: [id, values],
-      callback: () => {
-      }
-    });
-  };
-
-  const onFinishFailed = errorInfo => {
-    // eslint-disable-next-line no-console
-    console.log('Failed:', errorInfo);
-  };
-
-  const onValuesChange = changedValues => {
-    console.log('onValuesChange', changedValues)
-  };
 
   const formItemLayout = {
     labelCol: {
@@ -90,6 +70,44 @@ const Create = props => {
     },
   };
 
+  const onFinish = (values) => {
+    console.log('onFinish', values);
+
+    const { dispatch } = props;
+    let id = props.match.params.id;
+    values.avatar = values.avatar[0];
+
+    dispatch({
+      type: '{{table.name | camel }}/update',
+      payload: [id, values],
+      callback: () => { },
+    });
+  };
+
+  const onFinishFailed = (errorInfo) => {
+    // eslint-disable-next-line no-console
+    console.log('Failed:', errorInfo);
+  };
+
+  const onValuesChange = (changedValues) => {
+    console.log('onValuesChange', changedValues);
+  };
+
+  useEffect(() => {
+    const { dispatch } = props;
+    let id = props.match.params.id;
+    dispatch({
+      type: '{{table.name | camel }}/get',
+      payload: id,
+      callback: (data) => {
+        if (data) {
+          data.avatar = [data.avatar];
+          form.setFieldsValue(data);
+        }
+      },
+    });
+  }, []);
+
   return (
     <PageHeaderWrapper content="">
       <Card bordered={false}>
@@ -101,7 +119,7 @@ const Create = props => {
           onFinishFailed={onFinishFailed}
           onValuesChange={onValuesChange}
         >
-{% for index,column in table.columns %}
+          {% for index,column in table.columns %}
 {% if column.name not in [table.primaryKey, 'created_at', 'updated_at', 'deleted_at']%}
           <FormItem
             {...formItemLayout}
@@ -122,6 +140,7 @@ const Create = props => {
           </FormItem>
 {% endif %}
 {% endfor %}
+
           <FormItem
             {...submitFormLayout}
           >
@@ -135,6 +154,6 @@ const Create = props => {
   );
 };
 
-export default connect(({ loading }) => ({
-  submitting: loading.effects['{{table.name | camel}}/update'],
-}))(Create);
+export default connect(({ loading, {{table.name | camel }} }) => ({
+  submitting: loading.effects['{{table.name | camel }}/get'],
+}))(Update);
