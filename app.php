@@ -3,10 +3,8 @@
 require_once 'vendor/autoload.php';
 
 $entry = $argv[1];
-$database = $argv[2];
-
-$env = ".env.$database";
-$dotenv = Dotenv\Dotenv::create(__DIR__, $env);
+$env = $argv[2];
+$dotenv = Dotenv\Dotenv::create(__DIR__, empty($env) ? '.env' : $env);
 $dotenv->load();
 
 use Illuminate\Database\Capsule\Manager as Capsule;

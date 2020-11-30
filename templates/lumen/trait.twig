@@ -69,6 +69,7 @@ trait {{table.name | camel }}Restable {
     public function store(Request $request)
     {
         $params = $request->only([{% for column in table.columns %}'{{column.name}}', {% endfor %}]);
+        $params['created_by'] = Auth::user()->name;
         $entity = {{ table.name | camel}}::create($params);
         {% for ref in table.refTables%}
             ${{ref.name}}s = $request->input('{{ref.name}}s');
@@ -103,6 +104,7 @@ trait {{table.name | camel }}Restable {
     public function update($id, Request $request)
     {
         $params = $request->only([{% for column in table.columns %}'{{column.name}}', {% endfor %}]);
+        $params['updated_by'] = Auth::user()->name;
         $result = {{ table.name | camel }}::find($id)->update($params);
         {% for ref in table.refTables%}
             ${{ref.name}}s = $request->input('{{ref.name}}s');

@@ -8,7 +8,7 @@
 
 ### 安装
 ```bash
-git clone https://github.com/shenopkss/code-master ~/.code-master
+git clone https://github.com/shenopkss/code-master
 cd ~/.code-master
 composer install
 ```
